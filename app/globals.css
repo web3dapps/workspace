@@ -337,6 +337,14 @@ footer .nav a
   border-radius: 8px;
   width: 140px;
 }
+.documentboxes p {
+  overflow: hidden; /* Prevents text from overflowing */
+  text-overflow: ellipsis; /* Adds ellipsis (...) for long text */
+  white-space: nowrap; /* Prevents wrapping to a new line */
+  max-width: 100%; /* Ensures it stays within the container */
+  text-align: center; /* Aligns text in the center */
+}
+
 .login-area {
   min-height: 100vh;  
   background: var(--menu-bg-color);
@@ -362,10 +370,15 @@ footer .nav a
 .bg-primary-light{
   background: var(--menu-bg-color) !important;
 }
-.chat-section
-{
+.chat-section {
+  display: flex;
+  flex-direction: column; /* Ensures content stacks vertically */
+  justify-content: space-between; /* Keeps elements spaced appropriately */
   padding: 50px 0;
+  min-height: 100vh; /* Makes the section take the full viewport height */
+  box-sizing: border-box; /* Includes padding in the height calculation */
 }
+
 .chat-section .nav-tabs .nav-link
 {
 background: #6c757d ;

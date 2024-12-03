@@ -68,7 +68,7 @@ export default function Index() {
                 className={classnames({ active: activeTab === "4" })}
                 onClick={() => toggleTab("4")}
               >
-                <i className="bi bi-people"></i> Team Collaboration
+                <i className="bi bi-people"></i> Agent Collaboration
               </NavLink>
             </NavItem>
             <NavItem>
@@ -76,7 +76,7 @@ export default function Index() {
                 className={classnames({ active: activeTab === "5" })}
                 onClick={() => toggleTab("5")}
               >
-                <i className="bi bi-person"></i> Builders
+                <i className="bi bi-person"></i> Agentspace
               </NavLink>
             </NavItem>
             {/* <NavItem>

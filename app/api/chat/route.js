@@ -8,14 +8,11 @@ export async function POST(request) {
 
     const contentType = request.headers.get("Content-Type");
     let message;
-    // const { message } = await request.json();
     if (contentType?.includes("application/pdf")) {
-      // Handle PDF processing
-      const pdfBuffer = await request.arrayBuffer();
-      // const pdfData = await PdfParse(new Uint8Array(pdfBuffer));
+      // const pdfBuffer = await request.arrayBuffer();
+      const pdfData = await PdfParse(new Uint8Array(pdfBuffer));
       message = `Summarize the following text extracted from a PDF:\n${pdfData.text}`;
     } else {
-      // Handle regular text processing
       const body = await request.json();
       message = body.message;
 
@@ -40,7 +37,7 @@ export async function POST(request) {
         temperature: 0.7, 
         top_p: 1, 
         frequency_penalty: 0,
-        presence_penalty: 0, // Neutral presence
+        presence_penalty: 0, 
       }),
     });
 

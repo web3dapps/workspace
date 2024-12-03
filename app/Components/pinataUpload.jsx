@@ -94,7 +94,7 @@ export default function TabPaneDocuments() {
     }
 
     try {
-      const tokenAmount = 5 * 10 ** 9; // Deduct 5 tokens with 9 decimals
+      const tokenAmount = 0.1 * 10 ** 9; 
       const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
       alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);

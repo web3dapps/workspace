@@ -47,7 +47,7 @@ export default function Chat() {
     setInput("");
     setLoading(true);
 
-    const tokenAmount = 1 * 10 ** 9; 
+    const tokenAmount = 0.01 * 10 ** 9; 
     const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
     alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with response...`);
