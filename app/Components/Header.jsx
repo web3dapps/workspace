@@ -31,7 +31,7 @@ const Header = () => {
       </NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse isOpen={isOpen} navbar>
-        <Nav className="ms-auto" navbar>
+        {/* <Nav className="ms-auto" navbar>
           <NavItem>
             <NavLink href="/">Home</NavLink>
           </NavItem>
@@ -59,7 +59,7 @@ const Header = () => {
           >
             Dashboard
           </Button>
-        )}
+        )} */}
         <Button color="light" size="" className="rounded-5 px-4 py-1 ms-auto">
           Buy Token
         </Button>

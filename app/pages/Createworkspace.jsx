@@ -87,7 +87,7 @@ export default function CreateWorkspace() {
         <Container>
           <Row className="mb-4" style={{ marginTop: "5rem" }}>
             <Col md="12" className="text-center">
-              <h3 className="text-white">Workspace Management</h3>
+              <h3 className="text-white">Web3Space Management</h3>
               <p className="text-muted">Create and manage your workspaces effortlessly</p>
             </Col>
           </Row>

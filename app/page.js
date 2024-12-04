@@ -4,7 +4,7 @@ import Index from "./pages/Index";
 export default function Home() {
   return (
     <main>
-        {/* <Index /> */}
+        {/* <Index /> */} 
         <Createworkspace/>
         {/* <Dashboard /> */}
     </main>
