@@ -35,7 +35,32 @@ export default function Chat() {
       }
     }
 
+    async function fetchChatHistory() {
+      const workspaceId = localStorage.getItem("workspace_id");
+      if (!workspaceId) return;
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "GET",
+          headers: {
+            "workspace_id": workspaceId,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(data.chats || []);
+        } else {
+          console.error("Failed to fetch chat history");
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    }
+
+
     initializeWeb3();
+    fetchChatHistory();
   }, []);
 
   const handleSend = async () => {
@@ -55,7 +80,9 @@ export default function Chat() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+        "workspace_id": localStorage.getItem("workspace_id"),
+         },
         body: JSON.stringify({ message: input }),
       });
 
@@ -78,42 +105,6 @@ export default function Chat() {
     }
   };
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    setLoading(true);
-
-    const userMessage = { role: "user", content: "Uploaded a PDF for summarization." };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      setLoading(false);
-
-      if (response.ok) {
-        const botMessage = { role: "assistant", content: data.reply };
-        setMessages((prev) => [...prev, botMessage]);
-      } else {
-        const errorMessage = {
-          role: "assistant",
-          content: "Sorry, something went wrong while processing the PDF.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } catch (error) {
-      console.error("Error processing PDF:", error);
-      setLoading(false);
-    }
-  };
 
   return (
     <div>
@@ -185,7 +176,7 @@ export default function Chat() {
                 <input
                   type="file"
                   accept=".pdf"
-                  onChange={handleFileUpload}
+                  // onChange={handleFileUpload}
                   style={{ display: "none" }}
                 />
               </label>

@@ -14,6 +14,8 @@ import {
   ModalFooter,
 } from "reactstrap";
 import Header from "../Components/Header";
+import axios from "axios";
+
 
 export default function CreateWorkspace() {
   const [workspace, setWorkspace] = useState({
@@ -25,52 +27,133 @@ export default function CreateWorkspace() {
   const [workspaces, setWorkspaces] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    const storedWorkspaces = localStorage.getItem("workspaces");
-    if (storedWorkspaces) {
-      setWorkspaces(JSON.parse(storedWorkspaces));
+  const fetchWorkspaces = async () => {
+  try {
+    const response = await fetch("/api/workspace");
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch workspaces.");
     }
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem("workspaces", JSON.stringify(workspaces));
-  }, [workspaces]);
+    const data = await response.json();
+    setWorkspaces(data);
+  } catch (error) {
+    console.error("Error fetching workspaces:", error.message);
+  }
+};
 
-  const handleChange = (e) => {
-    const { id, value, files } = e.target;
+useEffect(() => {
+  fetchWorkspaces();
+}, []);
 
-    if (id === "file" && files && files[0]) {
-      const file = files[0];
-      const imageURL = URL.createObjectURL(file);
-      setWorkspace({
-        ...workspace,
-        image: imageURL,
+  // useEffect(() => {
+  //   const storedWorkspaces = localStorage.getItem("workspaces");
+  //   if (storedWorkspaces) {
+  //     setWorkspaces(JSON.parse(storedWorkspaces));
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem("workspaces", JSON.stringify(workspaces));
+  // }, [workspaces]);
+
+const handleChange = (e) => {
+  const { id, value, files } = e.target;
+
+  if (id === "file" && files && files[0]) {
+    const file = files[0];
+    const imageURL = URL.createObjectURL(file); 
+    setWorkspace({
+      ...workspace,
+      imageFile: file,
+      image: imageURL,
+    });
+  } else {
+    setWorkspace({
+      ...workspace,
+      [id]: value,
+    });
+  }
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (workspace.name && workspace.description) {
+    try {
+      let imageUrl = workspace.image;
+
+      if (workspace.imageFile) {
+        const formData = new FormData();
+        formData.append("file", workspace.imageFile, workspace.imageFile.name);
+
+        const uploadResponse = await axios.post("/api/upload", {
+          file: await toBase64(workspace.imageFile),
+          fileName: workspace.imageFile.name,
+        });
+
+        if (uploadResponse.status === 200) {
+          const { hash } = uploadResponse.data;
+          imageUrl = `https://gateway.pinata.cloud/ipfs/${hash}`;
+        }
+      }
+
+      const response = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: workspace.name,
+          description: workspace.description,
+          image: imageUrl,
+        }),
       });
-    } else {
-      setWorkspace({
-        ...workspace,
-        [id]: value,
-      });
-    }
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (workspace.name && workspace.description) {
-      setWorkspaces([...workspaces, workspace]);
-      setWorkspace({
-        name: "",
-        description: "",
-        image: "",
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create workspace");
+      }
+
+      const data = await response.json();
+      setWorkspaces((prev) => [...prev, { ...workspace, id: data.id }]);
+
+      setWorkspace({ name: "", description: "", image: "" });
       setModalOpen(false);
+    } catch (error) {
+      console.error("Error creating workspace:", error.message);
     }
-  };
+  }
+};
 
-  const handleDelete = (index) => {
-    const updatedWorkspaces = workspaces.filter((_, i) => i !== index);
+const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = (error) => reject(error);
+  })
+
+
+const handleDelete = async (id) => {
+  try {
+    const response = await fetch(`/api/workspace?id=${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to delete workspace");
+    }
+
+    const updatedWorkspaces = workspaces.filter((ws) => ws.id !== id);
     setWorkspaces(updatedWorkspaces);
-  };
+
+    alert("Workspace deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting workspace:", error.message);
+    alert("Failed to delete workspace: " + error.message);
+  }
+};
+
 
   return (
     <>
@@ -102,7 +185,7 @@ export default function CreateWorkspace() {
               <Card
                 className="border-0 shadow-sm d-flex justify-content-center align-items-center"
                 style={{
-                  height: "250px",
+                  height: "315px",
                   backgroundColor: "#FFF5E5", 
                   cursor: "pointer",
                   borderRadius: "10px",
@@ -122,95 +205,98 @@ export default function CreateWorkspace() {
               </Card>
             </Col>
 
-{workspaces.map((ws, index) => (
-  <Col lg="3" md="4" sm="6" key={index}>
-    <Card
-      className="border-0 shadow-sm position-relative text-center"
-      style={{
-        borderRadius: "15px", // Rounded corners for the card
-        backgroundColor: "#FFF5E5", // Light orange background
-        color: "white", // White text for contrast
-        overflow: "hidden",
-      }}
-    >
-      {/* Close Button */}
-      <button
-        type="button"
-        className="btn-close position-absolute top-0 end-0 m-2"
-        aria-label="Close"
-        style={{
-          color: "white", // White color for the close button
-          filter: "invert(100%)", // Ensure it stands out against the dark background
-        }}
-        onClick={() => handleDelete(index)}
-      ></button>
+        {workspaces.map((ws, index) => (
+          <Col lg="3" md="4" sm="6" key={index}>
+            <Card
+              className="border-0 shadow-sm position-relative text-center"
+              style={{
+                borderRadius: "15px", 
+                backgroundColor: "#FFF5E5", 
+                color: "white",
+                overflow: "hidden",
+              }}
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                className="btn-close position-absolute top-0 end-0 m-2"
+                aria-label="Close"
+                style={{
+                  color: "#000",
+                  filter: "invert(100%)",
+                }}
+                onClick={() => handleDelete(ws.id)}
+              ></button>
 
-      <CardBody className="d-flex flex-column align-items-center p-4">
-        {/* Workspace Name */}
-        <h5
-          className="mb-3"
-          style={{
-            color: "#000",
-            fontWeight: "bold",
-          }}
-        >
-          {ws.name}
-        </h5>
-
-        {/* Profile Image */}
-        <img
-          src={ws.image || "/default-image.png"}
-          alt={ws.name}
-          width="120"
-          height="120"
-          className="rounded-circle shadow mb-4"
-          style={{
-            objectFit: "cover", // Ensure image scales properly
-            border: "3px solid #f59532", // Add orange border around the image
-          }}
-        />
-
-        <h5
-          className="mb-3"
-          style={{
+              <CardBody className="d-flex flex-column align-items-center p-4">
+                <h5
+                  className="mb-3"
+                  style={{
                     color: "#000",
-            fontWeight: "bold",
-          }}
-        >
-          {ws.description}
-        </h5>
+                    fontWeight: "bold",
+                  }}
+                >
+                  {ws.name}
+                </h5>
 
-        {/* Manage Button */}
-        <Link href="/admin" passHref>
-          <Button
-            style={{
-              backgroundColor: "#f59532",
-              borderColor: "#f59532",
-              color: "white",
-              fontWeight: "bold",
-              padding: "0.5rem 1.5rem",
-              borderRadius: "25px", // Rounded button
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#e58528"; // Darker orange on hover
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#f59532"; // Original orange
-            }}
-            onMouseDown={(e) => {
-              e.target.style.transform = "scale(0.95)"; // Slight shrink on click
-            }}
-            onMouseUp={(e) => {
-              e.target.style.transform = "scale(1)"; // Revert to normal size
-            }}
-          >
-            Manage
-          </Button>
-        </Link>
-      </CardBody>
-    </Card>
-  </Col>
-))}
+                <img
+                  src={ws.image || "/default-image.png"}
+                  alt={ws.name}
+                  width="120"
+                  height="120"
+                  className="rounded-circle shadow mb-4"
+                  style={{
+                    objectFit: "cover",
+                    border: "3px solid #f59532",
+                  }}
+                />
+
+                    <h5
+              className="mb-3 workspace-description"
+              style={{
+                color: "#000",
+                fontWeight: "bold",
+              }}
+              title={ws.description}  
+            >
+              {ws.description}
+            </h5>
+
+
+                {/* Manage Button */}
+                <Link href="/admin" passHref>
+                  <Button
+                    style={{
+                      backgroundColor: "#f59532",
+                      borderColor: "#f59532",
+                      color: "white",
+                      fontWeight: "bold",
+                      padding: "0.5rem 1.5rem",
+                      borderRadius: "25px", 
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "#e58528"; 
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "#f59532";
+                    }}
+                    onMouseDown={(e) => {
+                      e.target.style.transform = "scale(0.95)"; 
+                    }}
+                    onMouseUp={(e) => {
+                      e.target.style.transform = "scale(1)"; 
+                    }}
+                    onClick={() => {
+                      localStorage.setItem("workspace_id", ws.id);
+                    }}
+                  >
+                    Manage
+                  </Button>
+                </Link>
+              </CardBody>
+            </Card>
+          </Col>
+        ))}
 
           </Row>
         </Container>

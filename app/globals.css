@@ -411,3 +411,18 @@ cursor: pointer;
   align-items: center;
 }
 
+.workspace-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* Truncate to one line */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adds ellipsis when text overflows */
+  white-space: normal; /* Allows wrapping of text */
+}
+
+.workspace-description-tooltip:hover {
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: clip; /* Removes the ellipsis on hover */
+}
+

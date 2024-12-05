@@ -10,6 +10,36 @@ export default function TabPaneDocuments() {
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
   
+useEffect(() => {
+  async function getDocuments() {
+    try {
+      const workspaceId = localStorage.getItem("workspace_id");
+      if (!workspaceId) {
+        alert("Workspace ID is not found in localStorage. Please select a workspace.");
+        return;
+      }
+
+      const response = await axios.get(`/api/pdf?workspace_id=${workspaceId}`);
+      if (response.status === 200) {
+        const fetchedDocuments = response.data.map((doc) => ({
+          id: doc.id,
+          workspaceId: doc.workspace_id,
+          fileName: doc.fileName,
+          file_url: doc.file_url,
+          uploadedAt: doc.uploaded_at,
+        }));
+        setDocuments(fetchedDocuments);
+      }
+    } catch (error) {
+      console.error("Error fetching documents:", error.message);
+      alert("Failed to load documents. Please try again later.");
+    }
+  }
+
+  getDocuments();
+}, []);
+
+
 
   useEffect(() => {
     async function initializeWeb3() {
@@ -44,47 +74,76 @@ export default function TabPaneDocuments() {
   };
 
   const uploadFile = async () => {
-    if (!file) {
-      alert("Please select a file first!");
-      return;
-    }
+  if (!file) {
+    alert("Please select a file first!");
+    return;
+  }
 
-    if (!web3) {
-      alert("Web3 is not initialized. Please ensure MetaMask is connected.");
-      return;
-    }
+  if (!web3) {
+    alert("Web3 is not initialized. Please ensure MetaMask is connected.");
+    return;
+  }
 
-    try {
-      const tokenAmount = 0.1 * 10 ** 9; 
-      const txHash = await deductTokens(web3, userAddress, tokenAmount);
+  try {
+    const tokenAmount = 0.1 * 10 ** 9; 
+    const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-      alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
+    alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64File = e.target.result.split(",")[1];
+     const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64File = e.target.result.split(",")[1];
 
-        const response = await axios.post("/api/upload", {
-          file: base64File,
-          fileName: file.name,
-        });
+      const uploadResponse = await axios.post("/api/upload", {
+        file: base64File,
+        fileName: file.name,
+      });
 
-        if (response.status === 200) {
-          alert("File uploaded successfully!");
-          const { hash } = response.data;
+      if (uploadResponse.status === 200) {
+        alert("File uploaded successfully!");
+        const { hash } = uploadResponse.data;
 
-          setDocuments((prev) => [
-            ...prev,
-            { fileName: file.name, hash, url: `https://gateway.pinata.cloud/ipfs/${hash}` },
-          ]);
+        try {
+          const workspaceId = localStorage.getItem("workspace_id");
+          if (!workspaceId) {
+            alert("Workspace ID is missing. Cannot save file details to the database.");
+            return;
+          }
+
+          const dbResponse = await axios.post("/api/pdf", {
+            workspace_id: workspaceId,
+            fileName: file.name, 
+            file_url: `https://gateway.pinata.cloud/ipfs/${hash}`,
+          });
+
+          if (dbResponse.status === 201) {
+            alert("File details saved to the database successfully!");
+
+            setDocuments((prev) => [
+              ...prev,
+              {
+                id: dbResponse.data.id,
+                fileName: file.name,
+                file_url: `https://gateway.pinata.cloud/ipfs/${hash}`,
+                uploadedAt: dbResponse.data.uploaded_at, 
+              },
+            ]);
+          }
+        } catch (dbError) {
+          console.error("Error saving file details to the database:", dbError);
+          alert(
+            "File upload succeeded, but an error occurred while saving details to the database."
+          );
         }
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error during the process:", error);
-      alert("An error occurred: " + error.message);
-    }
-  };
+      }
+    };
+    reader.readAsDataURL(file);
+  } catch (error) {
+    console.error("Error during the process:", error);
+    alert("An error occurred: " + error.message);
+  }
+};
+
 
   return (
     <div>
@@ -118,7 +177,7 @@ export default function TabPaneDocuments() {
             <div className="all-documentboxes p-3">
               {documents.map((doc, index) => (
                 <div key={index} className="documentboxes text-center">
-                  <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                  <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
                     <img
                       src="/img/home14-imagebox1.png"
                       alt={doc.fileName}
