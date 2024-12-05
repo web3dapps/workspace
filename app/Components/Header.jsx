@@ -7,7 +7,7 @@ import {
   NavbarBrand,
   Nav,
   NavItem,
-  NavLink,
+  NavLink,  
   Button,
 } from "reactstrap";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -60,10 +60,51 @@ const Header = () => {
             Dashboard
           </Button>
         )} */}
-        <Button color="light" size="" className="rounded-5 px-4 py-1 ms-auto">
-          Buy Token
-        </Button>
-        <ConnectButton />
+         <div className="d-flex ms-auto align-items-center">
+  <Button
+    color="light"
+    className="rounded-5 px-4 py-1 me-3"
+    style={{
+      fontWeight: "bold",
+      backgroundColor: "#f59532",
+      borderColor: "#f59532",
+      color: "white",
+      transition: "background-color 0.3s, transform 0.2s",
+    }}
+    onMouseEnter={(e) => {
+      e.target.style.backgroundColor = "#e58528"; // Darker orange on hover
+      e.target.style.borderColor = "#e58528";
+    }}
+    onMouseLeave={(e) => {
+      e.target.style.backgroundColor = "#f59532"; // Original orange
+      e.target.style.borderColor = "#f59532";
+    }}
+    onMouseDown={(e) => {
+      e.target.style.transform = "scale(0.95)"; // Slight shrink on click
+    }}
+    onMouseUp={(e) => {
+      e.target.style.transform = "scale(1)"; // Revert to normal size
+    }}
+    onFocus={(e) => {
+      e.target.style.boxShadow = "0 0 8px rgba(245, 149, 50, 0.5)"; // Highlight effect
+    }}
+    onBlur={(e) => {
+      e.target.style.boxShadow = "none"; // Remove focus effect
+    }}
+    onClick={() => {
+      window.open(
+        "https://app.uniswap.org/swap?chain=polygon&inputCurrency=0xc2132d05d31c914a87c6611c10748aeb04b58e8f&outputCurrency=0x20854e3f9231778a1f9515a5551872f161a1e3a2&value=1&field=input",
+        "_blank"
+      );
+    }}
+  >
+    Buy Token
+  </Button>
+  <div className="custom-connect-button">
+    <ConnectButton />
+  </div>
+</div>
+
       </Collapse>
     </Navbar>
   );

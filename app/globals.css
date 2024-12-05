@@ -392,3 +392,22 @@ cursor: pointer;
 {
   background: #f39436 !important;
 }
+
+.custom-connect-button .chakra-button {
+  background-color: #f59532 !important; 
+  border-radius: 30px !important;       
+  padding: 8px 32px !important;         
+  font-weight: bold !important;         
+  color: white !important;              
+  border: none !important;              
+}
+
+.custom-connect-button .chakra-button:hover {
+  background-color: #e6822a !important; 
+}
+
+.custom-connect-button {
+  display: flex;
+  align-items: center;
+}
+
