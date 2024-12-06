@@ -1,32 +1,35 @@
-import db from "@/lib/database";
+import supabase from "@/lib/database";
 
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
-}
 export async function POST(request) {
   try {
     const body = await request.json();
+    console.log("Received body:", body); 
 
     const { name, description, image } = body;
 
     if (!name || !description) {
-      throw new Error("Name and description are required.");
+      return new Response(
+        JSON.stringify({ error: "Name and description are required." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    const stmt = db.prepare(`
-      INSERT INTO Workspace (name, description, image)
-      VALUES (?, ?, ?)
-    `);
-    const result = stmt.run(name, description, image || null);
+    const { data, error } = await supabase
+      .from("Workspace")
+      .insert([{ name, description, image }])
+      .select(); 
+
+    if (error) {
+      console.error("Supabase insert error:", error.message);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error("Insert failed, no data returned.");
+    }
+
     return new Response(
-      JSON.stringify({ success: true, id: result.lastInsertRowid }),
+      JSON.stringify({ success: true, id: data[0].id }),
       { status: 201, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
@@ -38,13 +41,13 @@ export async function POST(request) {
   }
 }
 
+
 export async function GET() {
   try {
-    // Fetch all workspaces from the database
-    const stmt = db.prepare("SELECT * FROM Workspace");
-    const workspaces = stmt.all();
+    const { data, error } = await supabase.from("Workspace").select("*");
+    if (error) throw error;
 
-    return new Response(JSON.stringify(workspaces), {
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -59,28 +62,20 @@ export async function GET() {
 
 export async function DELETE(request) {
   try {
+    // const { id } = await request.json();
+
     const url = new URL(request.url);
-    const workspaceId = url.searchParams.get("id");
+    const id = url.searchParams.get("id");
 
-    if (!workspaceId) {
-      return new Response(
-        JSON.stringify({ error: "Workspace ID is required." }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const { error } = await supabase
+      .from("Workspace")
+      .delete()
+      .eq("id", id);
 
-    const deleteStmt = db.prepare("DELETE FROM Workspace WHERE id = ?");
-    const result = deleteStmt.run(workspaceId);
-
-    if (result.changes === 0) {
-      return new Response(
-        JSON.stringify({ error: "Workspace not found or already deleted." }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    if (error) throw error;
 
     return new Response(
-      JSON.stringify({ success: true, message: "Workspace deleted successfully." }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {

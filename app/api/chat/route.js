@@ -1,78 +1,41 @@
 import fetch from "node-fetch";
-import db from "@/lib/database";
+import supabase from "@/lib/database";
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
-// function renameMessageColumnToContent() {
-//   const tableInfo = db.prepare(`PRAGMA table_info(Chat);`).all();
-//   const hasMessageColumn = tableInfo.some((column) => column.name === "message");
-//   const hasContentColumn = tableInfo.some((column) => column.name === "content");
-
-//   // If 'content' column already exists, do nothing
-//   if (hasContentColumn) {
-//     console.log("'content' column already exists.");
-//     return;
-//   }
-
-//   // If 'message' column exists but 'content' does not, proceed with renaming
-//   if (hasMessageColumn && !hasContentColumn) {
-//     db.transaction(() => {
-//       // 1. Create a new table with the correct schema
-//       db.exec(`
-//         CREATE TABLE Chat_new (
-//           id INTEGER PRIMARY KEY AUTOINCREMENT,
-//           workspace_id INTEGER NOT NULL,
-//           content TEXT NOT NULL,
-//           role TEXT NOT NULL DEFAULT 'user',
-//           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//           FOREIGN KEY (workspace_id) REFERENCES Workspace (id)
-//         );
-//       `);
-
-//       // 2. Copy the data from the old table to the new table
-//       db.exec(`
-//         INSERT INTO Chat_new (id, workspace_id, content, role, created_at)
-//         SELECT id, workspace_id, message, role, created_at FROM Chat;
-//       `);
-
-//       // 3. Drop the old table
-//       db.exec(`DROP TABLE Chat;`);
-
-//       // 4. Rename the new table to the original table name
-//       db.exec(`ALTER TABLE Chat_new RENAME TO Chat;`);
-//     })();
-
-//     console.log("Renamed 'message' column to 'content'.");
-//   } else {
-//     console.log("No need to rename the column.");
-//   }
-// }
-
-// // Run the function to rename the column if needed
-// renameMessageColumnToContent();
- 
-
 export async function POST(request) {
   try {
-    const contentType = request.headers.get("Content-Type");
     const workspaceId = request.headers.get("workspace_id");
 
     if (!workspaceId) {
-      throw new Error("Workspace ID is required.");
+      return new Response(
+        JSON.stringify({ error: "Workspace ID is required." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    let message;
     const body = await request.json();
-    message = body.message;
+    const message = body.message;
 
     if (!message) {
-      throw new Error("No message provided.");
+      return new Response(
+        JSON.stringify({ error: "No message provided." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    // Insert user's message
-    db.prepare(
-      `INSERT INTO Chat (workspace_id, content, role, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-    ).run(workspaceId, message, "user");
+    const { error: userInsertError } = await supabase
+      .from("Chat")
+      .insert({
+        workspace_id: workspaceId,
+        content: message,
+        role: "user",
+      });
+
+    if (userInsertError) {
+      console.error("Error inserting user message:", userInsertError.message);
+      throw userInsertError;
+    }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -110,9 +73,21 @@ export async function POST(request) {
     const assistantMessage = data.choices[0]?.message?.content || "";
 
     // Insert assistant's message
-    db.prepare(
-      `INSERT INTO Chat (workspace_id, content, role, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-    ).run(workspaceId, assistantMessage, "assistant");
+    const { error: assistantInsertError } = await supabase
+      .from("Chat")
+      .insert({
+        workspace_id: workspaceId,
+        content: assistantMessage,
+        role: "assistant",
+      });
+
+    if (assistantInsertError) {
+      console.error(
+        "Error inserting assistant message:",
+        assistantInsertError.message
+      );
+      throw assistantInsertError;
+    }
 
     return new Response(
       JSON.stringify({ reply: assistantMessage }),
@@ -122,9 +97,9 @@ export async function POST(request) {
       }
     );
   } catch (error) {
-    console.error("Error communicating with OpenAI:", error);
+    console.error("Error communicating with OpenAI:", error.message);
     return new Response(
-      JSON.stringify({ error: "Failed to fetch response from OpenAI." }),
+      JSON.stringify({ error: "Failed to process request." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -141,18 +116,23 @@ export async function GET(request) {
       );
     }
 
-    const chats = db
-      .prepare(
-        `SELECT * FROM Chat WHERE workspace_id = ? ORDER BY created_at ASC`
-      )
-      .all(workspaceId);
+    const { data: chats, error } = await supabase
+      .from("Chat")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching chat history:", error.message);
+      throw error;
+    }
 
     return new Response(JSON.stringify({ chats }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error fetching chat history:", error);
+    console.error("Error fetching chat history:", error.message);
     return new Response(
       JSON.stringify({ error: "Failed to fetch chat history." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
