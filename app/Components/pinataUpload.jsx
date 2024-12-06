@@ -85,10 +85,10 @@ useEffect(() => {
   }
 
   try {
-    // const tokenAmount = 0.1 * 10 ** 9; 
-    // const txHash = await deductTokens(web3, userAddress, tokenAmount);
+    const tokenAmount = 0.1 * 10 ** 9; 
+    const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-    // alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
+    alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
 
      const reader = new FileReader();
     reader.onload = async (e) => {

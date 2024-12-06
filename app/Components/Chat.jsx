@@ -72,10 +72,10 @@ export default function Chat() {
     setInput("");
     setLoading(true);
 
-    // const tokenAmount = 0.01 * 10 ** 9; 
-    // const txHash = await deductTokens(web3, userAddress, tokenAmount);
+    const tokenAmount = 0.01 * 10 ** 9; 
+    const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-    // alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with response...`);
+    alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with response...`);
 
     try {
       const response = await fetch("/api/chat", {
