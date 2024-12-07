@@ -3,6 +3,7 @@ import axios from "axios";
 import Web3 from "web3";
 import { Button, Card, Col, Row } from "reactstrap";
 import deductTokens from "@/utils/coinDeduction";
+import { toast } from "react-toastify";
 
 export default function TabPaneDocuments() {
   const [file, setFile] = useState(null);
@@ -88,7 +89,7 @@ useEffect(() => {
     const tokenAmount = 0.1 * 10 ** 9; 
     const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-    alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
+    toast.success(`Tokens deducted successfully (TX: ${txHash}). Proceeding with file upload...`);
 
      const reader = new FileReader();
     reader.onload = async (e) => {
@@ -100,7 +101,7 @@ useEffect(() => {
       });
 
       if (uploadResponse.status === 200) {
-        alert("File uploaded successfully!");
+        toast.success("File uploaded successfully!");
         const { hash } = uploadResponse.data;
 
         try {
@@ -117,7 +118,7 @@ useEffect(() => {
           });
 
           if (dbResponse.status === 201) {
-            alert("File details saved to the database successfully!");
+            toast.success("File details saved to the database successfully!");
 
             setDocuments((prev) => [
               ...prev,
@@ -140,7 +141,7 @@ useEffect(() => {
     reader.readAsDataURL(file);
   } catch (error) {
     console.error("Error during the process:", error);
-    alert("An error occurred: " + error.message);
+    toast.error("An error occurred: " + error.message);
   }
 };
 

@@ -28,6 +28,9 @@ import Contentcreator from "../Components/Contentcreator";
 import Features from "../Components/Features";
 import TabPaneDocuments from "../Components/pinataUpload";
 import TransactionHistory from "../Components/transactionHistory";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState("1"); // State to track active tab
@@ -43,6 +46,7 @@ export default function Index() {
 
   return (
     <>
+    <ToastContainer />
       <Navbar />
       <section className="chat-section bg-dark">
         <div className="px-3">

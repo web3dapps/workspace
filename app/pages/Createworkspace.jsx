@@ -15,6 +15,11 @@ import {
 } from "reactstrap";
 import Header from "../Components/Header";
 import axios from "axios";
+import Spinner from 'react-bootstrap/Spinner';
+import { FaCheckCircle } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { useWallet } from "../context/WalletContext";
+
 
 
 export default function CreateWorkspace() {
@@ -26,10 +31,23 @@ export default function CreateWorkspace() {
   });
   const [workspaces, setWorkspaces] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle");
 
-  const fetchWorkspaces = async () => {
+  const { walletAddress } = useWallet();
+
+  console.log(walletAddress, "agam-wallet")
+
+
+
+const fetchWorkspaces = async (walletAddress) => {
   try {
-    const response = await fetch("/api/workspace");
+    if (!walletAddress) {
+      console.warn("No wallet address available. Skipping API call.");
+      return; 
+    }
+
+    const response = await fetch(`/api/workspace?wallet_address=${walletAddress}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch workspaces.");
@@ -43,19 +61,8 @@ export default function CreateWorkspace() {
 };
 
 useEffect(() => {
-  fetchWorkspaces();
-}, []);
-
-  // useEffect(() => {
-  //   const storedWorkspaces = localStorage.getItem("workspaces");
-  //   if (storedWorkspaces) {
-  //     setWorkspaces(JSON.parse(storedWorkspaces));
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   localStorage.setItem("workspaces", JSON.stringify(workspaces));
-  // }, [workspaces]);
+  fetchWorkspaces(walletAddress);
+}, [walletAddress]);
 
 const handleChange = (e) => {
   const { id, value, files } = e.target;
@@ -79,48 +86,71 @@ const handleChange = (e) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  if (workspace.name && workspace.description) {
-    try {
-      let imageUrl = workspace.image;
+  if (!workspace.name || !workspace.description) {
+    alert("Name and description are required.");
+    return;
+  }
 
-      if (workspace.imageFile) {
-        const formData = new FormData();
-        formData.append("file", workspace.imageFile, workspace.imageFile.name);
+  setLoading(true);
+  setStatus("loading");
 
-        const uploadResponse = await axios.post("/api/upload", {
-          file: await toBase64(workspace.imageFile),
-          fileName: workspace.imageFile.name,
-        });
+  try {
+    let imageUrl = workspace.image;
 
-        if (uploadResponse.status === 200) {
-          const { hash } = uploadResponse.data;
-          imageUrl = `https://gateway.pinata.cloud/ipfs/${hash}`;
-        }
-      }
+    if (workspace.imageFile) {
+      const formData = new FormData();
+      formData.append("file", workspace.imageFile, workspace.imageFile.name);
 
-      const response = await fetch("/api/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: workspace.name,
-          description: workspace.description,
-          image: imageUrl,
-        }),
+      const uploadResponse = await axios.post("/api/upload", {
+        file: await toBase64(workspace.imageFile),
+        fileName: workspace.imageFile.name,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create workspace");
+      if (uploadResponse.status === 200) {
+        const { hash } = uploadResponse.data;
+        imageUrl = `https://gateway.pinata.cloud/ipfs/${hash}`;
+      } else {
+        throw new Error("Failed to upload image.");
       }
-
-      const data = await response.json();
-      setWorkspaces((prev) => [...prev, { ...workspace, id: data.id }]);
-
-      setWorkspace({ name: "", description: "", image: "" });
-      setModalOpen(false);
-    } catch (error) {
-      console.error("Error creating workspace:", error.message);
     }
+
+    const response = await fetch("/api/workspace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: workspace.name,
+        description: workspace.description,
+        image: imageUrl,
+        wallet_address: walletAddress
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to create workspace");
+    }
+
+    const data = await response.json();
+
+    setWorkspaces((prev) => [...prev, { ...workspace, id: data.id }]);
+
+    setWorkspace({ name: "", description: "", image: "" });
+    setStatus("success");
+    setLoading(false);
+
+    toast.success("Workspace created successfully!");
+
+
+    setTimeout(() => {
+      setStatus("idle");
+      setModalOpen(false); 
+    }, 700);
+  } catch (error) {
+    console.error("Error creating workspace:", error.message);
+
+    setStatus("idle");
+    setLoading(false);
+    alert(error.message || "An error occurred while creating the workspace.");
   }
 };
 
@@ -147,10 +177,10 @@ const handleDelete = async (id) => {
     const updatedWorkspaces = workspaces.filter((ws) => ws.id !== id);
     setWorkspaces(updatedWorkspaces);
 
-    alert("Workspace deleted successfully.");
+    toast.success("Workspace deleted successfully!");
   } catch (error) {
     console.error("Error deleting workspace:", error.message);
-    alert("Failed to delete workspace: " + error.message);
+    toast.error("Failed to delete workspace: " + error.message);
   }
 };
 
@@ -191,7 +221,15 @@ const handleDelete = async (id) => {
                   borderRadius: "10px",
                   border: "2px dashed #f59532", 
                 }}
-                onClick={() => setModalOpen(true)}
+                onClick={() => {
+                 console.log(walletAddress, "inside if condition")
+
+                if (!walletAddress) {
+                  console.log(walletAddress, "inside if condition")
+                toast.error("Wallet is not connected. Please connect your wallet.");
+                return; 
+                    }  
+                setModalOpen(true)}}
               >
                 <h1
                   className="text-muted"
@@ -303,42 +341,41 @@ const handleDelete = async (id) => {
       </div>
 
       <Modal isOpen={modalOpen} toggle={() => setModalOpen(!modalOpen)} centered>
-<ModalHeader
-  style={{
-    backgroundColor: "#f59532", // Orange color
-    color: "white",
-    borderBottom: "none",
-    display: "flex", // Flexbox for alignment
-    justifyContent: "center", // Center content horizontally
-    alignItems: "center", // Center content vertically
-    position: "relative",
-  }}
->
-  {/* Centered Title */}
-  <h5
-    style={{
-      margin: 0,
-      fontWeight: "bold",
-    }}
-  >
-    Create Workspace
-  </h5>
+          <ModalHeader
+            style={{
+              backgroundColor: "#f59532", 
+              color: "white",
+              borderBottom: "none",
+              display: "flex", 
+              justifyContent: "center",
+              alignItems: "center", 
+              position: "relative",
+            }}
+          >
+            <h5
+              style={{
+                margin: 0,
+                fontWeight: "bold",
+              }}
+            >
+              Create Workspace
+            </h5>
 
-  {/* Close Button */}
-  <button
-    type="button"
-    className="btn-close"
-    aria-label="Close"
-    style={{
-      position: "absolute",
-      top: "12px",
-      right: "16px",
-      color: "white",
-      filter: "invert(100%)",
-    }}
-    onClick={() => setModalOpen(false)}
-  ></button>
-</ModalHeader>
+            {/* Close Button */}
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="Close"
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "16px",
+                color: "white",
+                filter: "invert(100%)",
+              }}
+              onClick={() => setModalOpen(false)}
+            ></button>
+          </ModalHeader>
 
 
         <ModalBody>
@@ -391,20 +428,44 @@ const handleDelete = async (id) => {
           <Button
             onClick={handleSubmit}
             style={{
-              backgroundColor: "#f59532",
-              borderColor: "#f59532",
+              backgroundColor: status === "success" ? "#28a745" : "#f59532",
+              borderColor: status === "success" ? "#28a745" : "#f59532",
               color: "white",
               padding: "10px 30px",
               fontWeight: "bold",
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#e58528";
+              if (status !== "success") {
+                e.target.style.backgroundColor = "#e58528";
+              }
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#f59532";
+              if (status !== "success") {
+                e.target.style.backgroundColor = "#f59532";
+              }
             }}
+            disabled={status === "loading"}
           >
-            Submit
+            {status === "loading" ? (
+              <span>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  style={{ marginRight: "5px" }}
+                />
+                Loading...
+              </span>
+            ) : status === "success" ? (
+              <span>
+                <FaCheckCircle style={{ marginRight: "5px", color: "white" }} />
+                Success
+              </span>
+            ) : (
+              "Submit"
+            )}
           </Button>
         </ModalFooter>
       </Modal>

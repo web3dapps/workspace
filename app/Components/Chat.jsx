@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import deductTokens from "@/utils/coinDeduction";
+import { toast } from "react-toastify";
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -75,7 +76,7 @@ export default function Chat() {
     const tokenAmount = 0.01 * 10 ** 9; 
     const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-    alert(`Tokens deducted successfully (TX: ${txHash}). Proceeding with response...`);
+    toast.success(`Tokens deducted successfully, Proceeding with response...`);
 
     try {
       const response = await fetch("/api/chat", {

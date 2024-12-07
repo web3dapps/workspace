@@ -11,14 +11,30 @@ import {
   Button,
 } from "reactstrap";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
 import Link from "next/link";
+import { useWallet } from "../context/WalletContext";
+import { useAccount, useDisconnect } from "wagmi";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { setWalletAddress } = useWallet();
 
   const toggle = () => setIsOpen(!isOpen);
+
+   React.useEffect(() => {
+    if (isConnected && address) {
+      setWalletAddress(address);
+    }
+  }, [isConnected, address, setWalletAddress]);
+
+  React.useEffect(() => {
+  if (!isConnected) {
+    setWalletAddress(null);
+  }
+}, [isConnected, setWalletAddress]);
+
 
   const handleDashboardRedirect = () => {
     router.push("/dashboard");
@@ -72,24 +88,24 @@ const Header = () => {
       transition: "background-color 0.3s, transform 0.2s",
     }}
     onMouseEnter={(e) => {
-      e.target.style.backgroundColor = "#e58528"; // Darker orange on hover
+      e.target.style.backgroundColor = "#e58528"; 
       e.target.style.borderColor = "#e58528";
     }}
     onMouseLeave={(e) => {
-      e.target.style.backgroundColor = "#f59532"; // Original orange
+      e.target.style.backgroundColor = "#f59532"; 
       e.target.style.borderColor = "#f59532";
     }}
     onMouseDown={(e) => {
-      e.target.style.transform = "scale(0.95)"; // Slight shrink on click
+      e.target.style.transform = "scale(0.95)"; 
     }}
     onMouseUp={(e) => {
-      e.target.style.transform = "scale(1)"; // Revert to normal size
+      e.target.style.transform = "scale(1)"; 
     }}
     onFocus={(e) => {
-      e.target.style.boxShadow = "0 0 8px rgba(245, 149, 50, 0.5)"; // Highlight effect
+      e.target.style.boxShadow = "0 0 8px rgba(245, 149, 50, 0.5)"; 
     }}
     onBlur={(e) => {
-      e.target.style.boxShadow = "none"; // Remove focus effect
+      e.target.style.boxShadow = "none"; 
     }}
     onClick={() => {
       window.open(

@@ -5,7 +5,7 @@ export async function POST(request) {
     const body = await request.json();
     console.log("Received body:", body); 
 
-    const { name, description, image } = body;
+    const { name, description, image, wallet_address } = body;
 
     if (!name || !description) {
       return new Response(
@@ -16,7 +16,7 @@ export async function POST(request) {
 
     const { data, error } = await supabase
       .from("Workspace")
-      .insert([{ name, description, image }])
+      .insert([{ name, description, image, wallet_address }])
       .select(); 
 
     if (error) {
@@ -42,9 +42,18 @@ export async function POST(request) {
 }
 
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const { data, error } = await supabase.from("Workspace").select("*");
+    const url = new URL(request.url);
+    const walletAddress = url.searchParams.get("wallet_address");
+
+    let query = supabase.from("Workspace").select("*");
+
+    if (walletAddress) {
+      query = query.eq("wallet_address", walletAddress);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
 
     return new Response(JSON.stringify(data), {
@@ -59,6 +68,7 @@ export async function GET() {
     );
   }
 }
+
 
 export async function DELETE(request) {
   try {
