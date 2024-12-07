@@ -61,8 +61,12 @@ const fetchWorkspaces = async (walletAddress) => {
 };
 
 useEffect(() => {
-  fetchWorkspaces(walletAddress);
-}, [walletAddress]);
+ if (walletAddress) {
+      fetchWorkspaces(walletAddress);
+    } else {
+      setWorkspaces([]);
+    }
+  }, [walletAddress]);
 
 const handleChange = (e) => {
   const { id, value, files } = e.target;
