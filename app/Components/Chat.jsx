@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import deductTokens from "@/utils/coinDeduction";
 import { toast } from "react-toastify";
+import { Modal, Spinner } from "react-bootstrap";
+import { BsCheckCircle } from "react-icons/bs";
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
 
-
-    useEffect(() => {
+  useEffect(() => {
     async function initializeWeb3() {
       if (window.ethereum) {
         const web3Instance = new Web3(window.ethereum);
@@ -44,7 +47,7 @@ export default function Chat() {
         const response = await fetch("/api/chat", {
           method: "GET",
           headers: {
-            "workspace_id": workspaceId,
+            workspace_id: workspaceId,
           },
         });
 
@@ -59,7 +62,6 @@ export default function Chat() {
       }
     }
 
-
     initializeWeb3();
     fetchChatHistory();
   }, []);
@@ -69,26 +71,31 @@ export default function Chat() {
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
-
     setInput("");
+
+    // Show modal for payment processing
+    setModalVisible(true);
     setLoading(true);
-
-    const tokenAmount = 0.01 * 10 ** 9; 
-    const txHash = await deductTokens(web3, userAddress, tokenAmount);
-
-    toast.success(`Tokens deducted successfully, Proceeding with response...`);
+    setPaymentSuccess(false);
 
     try {
+      const tokenAmount = 0.001 * 10 ** 9;
+      const txHash = await deductTokens(web3, userAddress, tokenAmount);
+
+      toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+
+      setPaymentSuccess(true); 
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json",
-        "workspace_id": localStorage.getItem("workspace_id"),
-         },
+        headers: {
+          "Content-Type": "application/json",
+          workspace_id: localStorage.getItem("workspace_id"),
+        },
         body: JSON.stringify({ message: input }),
       });
 
       const data = await response.json();
-      setLoading(false);
 
       if (response.ok) {
         const botMessage = { role: "assistant", content: data.reply };
@@ -102,10 +109,13 @@ export default function Chat() {
       }
     } catch (error) {
       console.error("Error:", error);
-      setLoading(false);
+
+      toast.error("Payment failed. Please try again.");
+    } finally {
+      setLoading(false); 
+      setTimeout(() => setModalVisible(false), 1500);
     }
   };
-
 
   return (
     <div>
@@ -141,20 +151,6 @@ export default function Chat() {
           </li>
         ))}
 
-        {loading && (
-          <li className="d-flex justify-content-start mb-4">
-            <div className="card">
-              <div className="card-body">
-                <p className="mb-0">
-                  <span className="typing-bubble"></span>
-                  <span className="typing-bubble"></span>
-                  <span className="typing-bubble"></span>
-                </p>
-              </div>
-            </div>
-          </li>
-        )}
-
         <li className="mb-3">
           <div className="form-outline position-relative">
             <input
@@ -166,23 +162,19 @@ export default function Chat() {
               placeholder="Type a message..."
             />
             <div className="right-12 float-end position-absolute d-flex align-items-center">
-              {/* Microphone button */}
               <button type="button" className="btn p-0 px-1">
                 <i className="bi bi-mic"></i>
               </button>
 
-              {/* File upload */}
               <label className="btn p-0 px-1">
                 <i className="bi bi-paperclip"></i>
                 <input
                   type="file"
                   accept=".pdf"
-                  // onChange={handleFileUpload}
                   style={{ display: "none" }}
                 />
               </label>
 
-              {/* Send button */}
               <button
                 type="button"
                 onClick={handleSend}
@@ -195,7 +187,27 @@ export default function Chat() {
         </li>
       </ul>
 
-      <style jsx>{`
+      {/* Modal */}
+      <Modal show={modalVisible} centered>
+        <Modal.Body className="text-center">
+          {loading ? (
+            <>
+              <Spinner animation="border" role="status" className="mb-3">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+              <p>Processing payment... Please wait.</p>
+            </>
+          ) : paymentSuccess ? (
+            <>
+              <BsCheckCircle className="text-success mb-3" size={50} />
+              <p className="text-success">Payment Successful!</p>
+            </>
+          ) : (
+            <p>Something went wrong.</p>
+          )}
+        </Modal.Body>
+      </Modal>
+       <style jsx>{`
         .typing-bubble {
           width: 12px;
           height: 12px;

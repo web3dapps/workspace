@@ -19,6 +19,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import { FaCheckCircle } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useWallet } from "../context/WalletContext";
+import ClaimTokenModel from "../Components/ClaimModel/ClaimTokenModal";
 
 
 
@@ -191,6 +192,7 @@ const handleDelete = async (id) => {
 
   return (
     <>
+    <ClaimTokenModel/>
       <Header />
       <div
         className="py-5 bg-dark"

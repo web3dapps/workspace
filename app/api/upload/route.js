@@ -1,12 +1,12 @@
 import axios from "axios";
 import FormData from "form-data";
 
-const PINATA_API_KEY = "201fd450ab585de3e786";
-const PINATA_API_SECRET = "9c565fdc674957d6efe97c3a7120281563dc9d388b045743242383437b28f1f0";
+const PINATA_API_KEY = "737602a1d514ee97e097";
+const PINATA_API_SECRET = "bb8d6e3d250ef5a6d7959cfaec1cd0e98dee0c9c92e0d958195fe59522aa5833";
 
 export async function POST(req) {
   try {
-    const { file, fileName } = await req.json(); // Parse the request payload
+    const { file, fileName } = await req.json(); 
 
     if (!file || !fileName) {
       return new Response(

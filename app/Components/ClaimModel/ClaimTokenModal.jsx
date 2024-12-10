@@ -1,0 +1,39 @@
+import React, { useEffect, useState } from "react";
+import Modal from "react-modal";
+import "./ModalStyles.css"; 
+
+const ClaimTokenModel = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
+
+   const closeModal = () => {
+    setIsOpen(false); 
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={closeModal}
+      contentLabel="Ad Modal"
+      className="modal-container"
+      overlayClassName="modal-overlay"
+    >
+      <div className="modal-content">
+        <h2>🎉 Claim Your 1000 FTC Coins! 🎉</h2>
+        <p>
+          Welcome to Web3Space! As a new user, you're eligible to claim free FTC Coins. 
+          Connect your wallet and start exploring the decentralized future!
+        </p>
+        <p className="modal-footer">Thank you for joining us!</p>
+         <button className="close-button" onClick={closeModal}>
+          Close
+        </button>
+      </div>
+    </Modal>
+  );
+};
+
+export default ClaimTokenModel;
