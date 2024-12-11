@@ -10,7 +10,7 @@ import {
   NavLink,  
   Button,
 } from "reactstrap";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+  import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { useWallet } from "../context/WalletContext";
 import { useAccount, useDisconnect } from "wagmi";

@@ -30,6 +30,11 @@ import TabPaneDocuments from "../Components/pinataUpload";
 import TransactionHistory from "../Components/transactionHistory";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import EnterprisesModules from "../Components/EnterprisesModules";
+import PersonalModules from "../Components/PersonalModules";
+import MyAgentSpace from "../Components/MyAgentSpace";
+import DocumentsAndFiles from "../Components/DocumentsAndFiles";
+import MeetigsAndEvents from "../Components/MeetngAndEvents";
 
 
 export default function Index() {
@@ -352,10 +357,15 @@ export default function Index() {
             </Col>
             <Col md="3">
               <div className="border rounded-3 p-3 h-100 border-secondary">
-                <Features />
+                <EnterprisesModules/>
+                <PersonalModules/>
+                <MyAgentSpace/>
+                <DocumentsAndFiles/>
+                <MeetigsAndEvents/>
+                {/* <Features />
                 <Documentreportsummary />
                 <Mediagallery />
-                <Contentcreator />
+                <Contentcreator /> */}
               </div>
             </Col>
           </Row>

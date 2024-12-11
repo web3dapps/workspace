@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import "./ModalStyles.css"; 
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const ClaimTokenModel = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +28,9 @@ const ClaimTokenModel = () => {
           Welcome to Web3Space! As a new user, you're eligible to claim free FTC Coins. 
           Connect your wallet and start exploring the decentralized future!
         </p>
-        <p className="modal-footer">Thank you for joining us!</p>
+<div className="connect-button-container">
+          <ConnectButton />
+        </div>        <p className="modal-footer">Thank you for joining us!</p>
          <button className="close-button" onClick={closeModal}>
           Close
         </button>
