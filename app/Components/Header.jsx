@@ -117,7 +117,7 @@ const Header = () => {
   >
     Buy Token
   </Button>
-  <div className="connect-button-container">
+  <div className="custom-connect-button">
     <ConnectButton />
   </div>
 </div>
