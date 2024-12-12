@@ -30,7 +30,7 @@ const ClaimTokenModel = () => {
         </p>
 <div className="connect-button-container">
           <ConnectButton />
-        </div>        <p className="modal-footer">Thank you for joining us!</p>
+        </div>
          <button className="close-button" onClick={closeModal}>
           Close
         </button>

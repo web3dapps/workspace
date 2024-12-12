@@ -79,12 +79,13 @@ const Header = () => {
          <div className="d-flex ms-auto align-items-center">
   <Button
     color="light"
-    className="rounded-5 px-4 py-1 me-3"
+    className=" px-4 py-1 me-3"
     style={{
       fontWeight: "bold",
+      fontSize: "16px",
       backgroundColor: "#f59532",
       borderColor: "#f59532",
-      color: "white",
+      color: "#222",
       transition: "background-color 0.3s, transform 0.2s",
     }}
     onMouseEnter={(e) => {
@@ -116,7 +117,7 @@ const Header = () => {
   >
     Buy Token
   </Button>
-  <div className="custom-connect-button">
+  <div className="connect-button-container">
     <ConnectButton />
   </div>
 </div>
