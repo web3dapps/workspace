@@ -192,7 +192,7 @@ const handleDelete = async (id) => {
 
   return (
     <>
-    <ClaimTokenModel/>
+    {!walletAddress && <ClaimTokenModel/>}
       <Header />
       <div
         className="py-5 bg-dark"

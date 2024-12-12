@@ -417,17 +417,17 @@ cursor: pointer;
 
 .workspace-description {
   display: -webkit-box;
-  -webkit-line-clamp: 1; /* Truncate to one line */
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis; /* Adds ellipsis when text overflows */
-  white-space: normal; /* Allows wrapping of text */
+  text-overflow: ellipsis; 
+  white-space: normal; 
 }
 
 .workspace-description-tooltip:hover {
   overflow: visible;
   white-space: nowrap;
-  text-overflow: clip; /* Removes the ellipsis on hover */
+  text-overflow: clip;
 }
 
 
