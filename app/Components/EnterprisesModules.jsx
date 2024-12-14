@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import { Collapse, Button, CardBody, Card } from 'reactstrap';
+import CrmPopup from './CrmPopup/CrmPopup';
 
-function EnterprisesModules(args) {
-    const [isOpen, setIsOpen] = useState(false);
+
+function EnterprisesModules({args , handleSend}) {
+    const [isOpen, setIsOpen] = useState(false);  
+    const [showPopup, setShowPopup] = useState(false);
+
+  const handleButtonClick = () => {
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
 
   const toggle = () => setIsOpen(!isOpen);
 
@@ -17,9 +28,16 @@ function EnterprisesModules(args) {
              <button type="button" class="btn btn-warning me-1 mb-2 btn-sm fs-10" id="legal-contract" data-bs-toggle="modal" data-bs-target="#contentCreatorModal">
               Content Creator
             </button>
-            <button class="btn btn-warning  me-1 mb-2 btn-sm fs-10"  id="connect-crm-btn-business" onclick="showConnectingMessage('crm')">
-              Connect to CRM
-            </button>
+             <div>
+              <button
+                className="btn btn-warning me-1 mb-2 btn-sm fs-10"
+                id="connect-crm-btn-business"
+                onClick={handleButtonClick}
+              >
+                Connect to CRM
+              </button>
+              {showPopup && <CrmPopup handleSend={handleSend} onClose={handleClosePopup} />}
+            </div>
             <a href="/dashboard/workspace-supported-platform/" type="button" class="btn btn-warning  me-1 mb-2 btn-sm fs-10" id="connect-zoho-business">
               Connect to Zoho
             </a>

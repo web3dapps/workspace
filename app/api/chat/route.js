@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import supabase from "@/lib/database";
+import { saveAs } from "file-saver"; 
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
@@ -49,7 +50,7 @@ export async function POST(request) {
           {
             role: "system",
             content:
-              "You are an intelligent and helpful assistant. Please provide precise and high-quality answers.",
+              "You are a document-generating assistant.",
           },
           { role: "user", content: message },
         ],

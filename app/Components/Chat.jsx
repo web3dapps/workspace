@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Web3 from "web3";
 import deductTokens from "@/utils/coinDeduction";
 import { toast } from "react-toastify";
 import { Modal, Spinner } from "react-bootstrap";
 import { BsCheckCircle } from "react-icons/bs";
+import { useCrm } from "../context/CrmContext";
 
-export default function Chat() {
+
+export default function Chat({onRegister}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,11 +15,12 @@ export default function Chat() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
+  const { crmName, setCrmName } = useCrm();
 
-  useEffect(() => {
-    async function initializeWeb3() {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
+  async function initializeWeb3() {
+    
+    if (window.ethereum) {
+      const web3Instance = new Web3(window.ethereum);
         try {
           await window.ethereum.request({ method: "eth_requestAccounts" });
           const accounts = await web3Instance.eth.getAccounts();
@@ -34,11 +37,13 @@ export default function Chat() {
       } else {
         const provider = new Web3.providers.HttpProvider("http://127.0.0.1:9545");
         const web3Instance = new Web3(provider);
+        
         setWeb3(web3Instance);
         console.warn("No MetaMask detected. Using local web3 provider.");
       }
     }
 
+  useEffect(() => {
     async function fetchChatHistory() {
       const workspaceId = localStorage.getItem("workspace_id");
       if (!workspaceId) return;
@@ -61,13 +66,47 @@ export default function Chat() {
         console.error("Error fetching chat history:", error);
       }
     }
-
     initializeWeb3();
     fetchChatHistory();
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+// useEffect(() => {
+//     if (crmName) {
+//       // handleSend();
+//       console.log(`Selected CRM: ${crmName}`);
+//   }
+// }, [crmName]);
+
+
+  const handleSend = async (crmName) => {
+    let web3Instance;
+    let userAddress;
+    if (window.ethereum) {
+       web3Instance = new Web3(window.ethereum);
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          const accounts = await web3Instance.eth.getAccounts();
+          setUserAddress(accounts[0]);
+          userAddress = accounts[0];
+          setWeb3(web3Instance);
+        } catch (error) {
+          console.error("User denied account access:", error);
+        }
+      } else if (window.web3) {
+        const web3Instance = new Web3(window.web3.currentProvider);
+        const accounts = await web3Instance.eth.getAccounts();
+        setUserAddress(accounts[0]);
+          userAddress = accounts[0];
+        setWeb3(web3Instance);
+      } else {
+        const provider = new Web3.providers.HttpProvider("http://127.0.0.1:9545");
+        const web3Instance = new Web3(provider);
+        
+        setWeb3(web3Instance);
+        console.warn("No MetaMask detected. Using local web3 provider.");
+      }
+
+  if (!crmName && !input.trim()) return;
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -80,12 +119,19 @@ export default function Chat() {
 
     try {
       const tokenAmount = 0.001 * 10 ** 9;
-      const txHash = await deductTokens(web3, userAddress, tokenAmount);
+      const txHash = await deductTokens(web3Instance, userAddress, tokenAmount);
 
       toast.success(`Tokens deducted successfully. TX: ${txHash}`);
 
       setPaymentSuccess(true); 
 
+     if (crmName) {
+      const botMessage = { role: "assistant", content: `${crmName} connected successfully.` };
+      setMessages((prev) => [...prev, botMessage]);
+      // setCrmName(null);
+    } 
+    
+    else {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -107,15 +153,20 @@ export default function Chat() {
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
+    }
     } catch (error) {
-      console.error("Error:", error);
-
       toast.error("Payment failed. Please try again.");
     } finally {
       setLoading(false); 
       setTimeout(() => setModalVisible(false), 1500);
     }
   };
+
+  useEffect(() => {
+    if (onRegister) {
+      onRegister(()=>handleSend);
+    }
+  }, [onRegister]);
 
   return (
     <div>

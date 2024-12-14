@@ -431,18 +431,104 @@ cursor: pointer;
 }
 
 
-/* .connect-button-container button {
-  background-color: rgb(245, 149, 50) !important;
-  color: #222 !important;
-  border: none !important;
-  border-radius: 5px !important;
-  padding: 10px 20px !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
-  cursor: pointer !important;
-  transition: background-color 0.3s ease !important;
+.crm-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.connect-button-container button:hover {
-  background-color: rgb(255, 165, 50) !important;
-} */
+.crm-popup {
+  background: #ffffff;
+  padding: 20px 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  width: 400px;
+  max-width: 90%;
+}
+
+.crm-popup h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.crm-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.crm-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.crm-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.crm-name {
+  flex-grow: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+}
+
+.crm-connect-button {
+  background-color: #e6822a; /* Button background color */
+  color: white; /* Button text color */
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.crm-connect-button:hover {
+  background-color: #d3741f; /* Slightly darker on hover */
+  transform: translateY(-2px); /* Subtle lift effect */
+}
+
+.crm-connect-button:active {
+  background-color: #bf681c; /* Darker shade on click */
+  transform: translateY(0); /* Reset lift effect */
+}
+
+.close-popup {
+  display: block;
+  margin: 20px auto 0;
+  width: 100px;
+  background-color: #e6822a; /* Same color for close button */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.close-popup:hover {
+  background-color: #d3741f; /* Slightly darker on hover */
+}
+
+.close-popup:active {
+  background-color: #bf681c; /* Darker shade on click */
+}

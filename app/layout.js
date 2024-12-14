@@ -10,14 +10,23 @@ export const metadata = {
   description: "Developed by CFCsoftware",
 };
 import { WalletProvider } from './context/WalletContext';
+import { ActiveTabProvider } from './context/ActiveTab';
+import { CrmProvider } from './context/CrmContext';
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>          
         <Providers>
-          <WalletProvider>{children}</WalletProvider>
+          <WalletProvider>
+            <ActiveTabProvider>
+              <CrmProvider>
+            {children}
+            </CrmProvider>
+            </ActiveTabProvider>
+            </WalletProvider>
           </Providers>
+          <Providers></Providers>
       </body>
     </html>
   );

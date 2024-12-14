@@ -35,10 +35,12 @@ import PersonalModules from "../Components/PersonalModules";
 import MyAgentSpace from "../Components/MyAgentSpace";
 import DocumentsAndFiles from "../Components/DocumentsAndFiles";
 import MeetigsAndEvents from "../Components/MeetngAndEvents";
+import { useActiveTab } from "../context/ActiveTab";
 
 
 export default function Index() {
-  const [activeTab, setActiveTab] = useState("1"); // State to track active tab
+  const {activeTab , setActiveTab} = useActiveTab()
+  // const [activeTab, setActiveTab] = useState("1"); // State to track active tab
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) {
@@ -48,6 +50,14 @@ export default function Index() {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
+
+   const [childFunction, setChildFunction] = useState(null);
+
+  const handleSend = (crmName)=>{
+    if (childFunction) {
+       childFunction(crmName); 
+    }
+  }
 
   return (
     <>
@@ -165,7 +175,7 @@ export default function Index() {
                           <i class="bi bi-copy text-white"></i>
                         </div>
                       </div>
-                      <Chat />
+                      <Chat onRegister={setChildFunction}/>
                     </Col>
                   </Row>
                 </TabPane>
@@ -357,7 +367,7 @@ export default function Index() {
             </Col>
             <Col md="3">
               <div className="border rounded-3 p-3 h-100 border-secondary">
-                <EnterprisesModules/>
+                <EnterprisesModules handleSend={handleSend}/>
                 <PersonalModules/>
                 <MyAgentSpace/>
                 <DocumentsAndFiles/>
