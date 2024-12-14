@@ -15,8 +15,9 @@ export default function Chat({onRegister}) {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
-  const { crmName, setCrmName } = useCrm();
+  // const { crmName, setCrmName } = useCrm();
 
+  const chatEndRef = useRef(null);
   async function initializeWeb3() {
     
     if (window.ethereum) {
@@ -70,12 +71,21 @@ export default function Chat({onRegister}) {
     fetchChatHistory();
   }, []);
 
+    useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
 // useEffect(() => {
 //     if (crmName) {
 //       // handleSend();
 //       console.log(`Selected CRM: ${crmName}`);
 //   }
 // }, [crmName]);
+ 
+
+const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
 
   const handleSend = async (crmName) => {
@@ -201,6 +211,9 @@ export default function Chat({onRegister}) {
             )}
           </li>
         ))}
+
+        <div ref={chatEndRef}></div>
+
 
         <li className="mb-3">
           <div className="form-outline position-relative">
