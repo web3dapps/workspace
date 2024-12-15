@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { Modal, Spinner } from "react-bootstrap";
 import { BsCheckCircle } from "react-icons/bs";
 import { useCrm } from "../context/CrmContext";
+import axios from "axios";
 
 
 export default function Chat({onRegister}) {
@@ -15,6 +16,7 @@ export default function Chat({onRegister}) {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   // const { crmName, setCrmName } = useCrm();
 
   const chatEndRef = useRef(null);
@@ -75,12 +77,89 @@ export default function Chat({onRegister}) {
     scrollToBottom();
   }, [messages]);
 
-// useEffect(() => {
-//     if (crmName) {
-//       // handleSend();
-//       console.log(`Selected CRM: ${crmName}`);
-//   }
-// }, [crmName]);
+const handleFileUpload = async (documentUrl) => {
+  try {
+    const response = await fetch(documentUrl);
+    const blob = await response.blob();
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64File = e.target.result.split(",")[1]; // Extract base64 content
+
+      const uploadResponse = await axios.post("/api/upload", {
+        file: base64File,
+        fileName: "generated-document.doc",
+      });
+
+      if (uploadResponse.status === 200) {
+        const { hash } = uploadResponse.data;
+
+        try {
+          const workspaceId = localStorage.getItem("workspace_id");
+          if (!workspaceId) {
+            alert("Workspace ID is missing. Cannot save file details to the database.");
+            return;
+          }
+
+          // Save the file URL and metadata to your database
+          const dbResponse = await axios.post("/api/pdf", {
+            workspace_id: workspaceId,
+            fileName: "generated-document.doc",
+            file_url: `https://gateway.pinata.cloud/ipfs/${hash}`,
+          });
+
+          if (dbResponse.status === 201) {
+            alert("File successfully saved to Web3 Storage and database!");
+          }
+        } catch (dbError) {
+          console.error("Error saving file to database:", dbError);
+          alert("File upload succeeded, but an error occurred while saving details to the database.");
+        }
+      }
+    };
+
+    reader.readAsDataURL(blob);
+  } catch (error) {
+    console.error("Error during file upload:", error);
+    alert("An error occurred during file upload: " + error.message);
+  }
+};
+
+
+const handleDownload = async (documentUrl) => {
+  try {
+    setPaymentLoading(true);
+    setModalVisible(true);
+    setPaymentSuccess(false);
+
+    const tokenAmount = 0.001 * 10 ** 9;
+
+    const txHash = await deductTokens(web3, userAddress, tokenAmount);
+
+    toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+    setPaymentLoading(false);
+    setPaymentSuccess(true);
+    setTimeout(() => setModalVisible(false), 1000);
+
+
+    const response = await fetch(documentUrl);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.downloaddownload = "generated-document.doc";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+  } catch (error) {
+    console.error("Error during download:", error);
+    toast.error("An error occurred during the download process: " + error.message);
+  } finally {
+    setModalVisible(false);
+  }
+};
+
  
 
 const scrollToBottom = () => {
@@ -89,59 +168,58 @@ const scrollToBottom = () => {
 
 
   const handleSend = async (crmName) => {
-    let web3Instance;
-    let userAddress;
-    if (window.ethereum) {
-       web3Instance = new Web3(window.ethereum);
-        try {
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          const accounts = await web3Instance.eth.getAccounts();
-          setUserAddress(accounts[0]);
-          userAddress = accounts[0];
-          setWeb3(web3Instance);
-        } catch (error) {
-          console.error("User denied account access:", error);
-        }
-      } else if (window.web3) {
-        const web3Instance = new Web3(window.web3.currentProvider);
-        const accounts = await web3Instance.eth.getAccounts();
-        setUserAddress(accounts[0]);
-          userAddress = accounts[0];
-        setWeb3(web3Instance);
-      } else {
-        const provider = new Web3.providers.HttpProvider("http://127.0.0.1:9545");
-        const web3Instance = new Web3(provider);
-        
-        setWeb3(web3Instance);
-        console.warn("No MetaMask detected. Using local web3 provider.");
-      }
+  let web3Instance;
+  let userAddress;
+
+  if (window.ethereum) {
+    web3Instance = new Web3(window.ethereum);
+    try {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = await web3Instance.eth.getAccounts();
+      setUserAddress(accounts[0]);
+      userAddress = accounts[0];
+      setWeb3(web3Instance);
+    } catch (error) {
+      console.error("User denied account access:", error);
+    }
+  } else if (window.web3) {
+    web3Instance = new Web3(window.web3.currentProvider);
+    const accounts = await web3Instance.eth.getAccounts();
+    setUserAddress(accounts[0]);
+    userAddress = accounts[0];
+    setWeb3(web3Instance);
+  } else {
+    const provider = new Web3.providers.HttpProvider("http://127.0.0.1:9545");
+    web3Instance = new Web3(provider);
+    setWeb3(web3Instance);
+    console.warn("No MetaMask detected. Using local web3 provider.");
+  }
 
   if (!crmName && !input.trim()) return;
 
-    const userMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+  const userMessage = { role: "user", content: input };
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
 
-    // Show modal for payment processing
-    setModalVisible(true);
-    setLoading(true);
-    setPaymentSuccess(false);
+  // Show modal for payment processing
+  setModalVisible(true);
+  setLoading(true);
+  setPaymentSuccess(false);
+  setPaymentLoading(true);
 
-    try {
-      const tokenAmount = 0.001 * 10 ** 9;
-      const txHash = await deductTokens(web3Instance, userAddress, tokenAmount);
+  try {
+    const tokenAmount = 0.001 * 10 ** 9;
+    const txHash = await deductTokens(web3Instance, userAddress, tokenAmount);
 
-      toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+    toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+    setPaymentLoading(false);
+    setPaymentSuccess(true);
+    setTimeout(() => setModalVisible(false), 1000);
 
-      setPaymentSuccess(true); 
-
-     if (crmName) {
+    if (crmName) {
       const botMessage = { role: "assistant", content: `${crmName} connected successfully.` };
       setMessages((prev) => [...prev, botMessage]);
-      // setCrmName(null);
-    } 
-    
-    else {
+    } else {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -151,26 +229,39 @@ const scrollToBottom = () => {
         body: JSON.stringify({ message: input }),
       });
 
-      const data = await response.json();
+      if (response.headers.get("Content-Type").includes("application/msword")) {
+        // Handle document response
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
 
-      if (response.ok) {
-        const botMessage = { role: "assistant", content: data.reply };
+        const botMessage = {
+          role: "assistant",
+          content: "Your document has been generated. Click below to download:",
+          documentUrl: url, // Add the document URL to the message
+        };
         setMessages((prev) => [...prev, botMessage]);
       } else {
-        const errorMessage = {
-          role: "assistant",
-          content: "Sorry, something went wrong. Please try again later.",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
+        const data = await response.json();
+
+        if (response.ok) {
+          const botMessage = { role: "assistant", content: data.reply };
+          setMessages((prev) => [...prev, botMessage]);
+        } else {
+          const errorMessage = {
+            role: "assistant",
+            content: "Sorry, something went wrong. Please try again later.",
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        }
       }
     }
-    } catch (error) {
-      toast.error("Payment failed. Please try again.");
-    } finally {
-      setLoading(false); 
-      setTimeout(() => setModalVisible(false), 1500);
-    }
-  };
+  } catch (error) {
+    toast.error("Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (onRegister) {
@@ -199,6 +290,27 @@ const scrollToBottom = () => {
             <div className="card">
               <div className="card-body">
                 <p className="mb-0">{msg.content}</p>
+                 {msg.documentUrl && (
+                    <div className="d-flex mt-2">
+                      {/* Download Button */}
+                      <button
+                        className="btn btn-primary ms-3"
+                        onClick={() => handleDownload(msg.documentUrl)}
+                      >
+                        Download Document
+                      </button>
+
+                      {/* Save to Web3 Storage Button */}
+                      <button
+                        className="btn btn-primary ms-3"
+                        onClick={() => handleFileUpload(msg.documentUrl)}
+                      >
+                        Save to Web3 Storage
+                      </button>
+                    </div>
+)}
+
+
               </div>
             </div>
             {msg.role === "user" && (
@@ -207,7 +319,7 @@ const scrollToBottom = () => {
                 alt="avatar"
                 className="rounded-circle d-flex align-self-start ms-3 shadow-1-strong"
                 width="40"
-              />
+              />  
             )}
           </li>
         ))}
@@ -251,10 +363,12 @@ const scrollToBottom = () => {
         </li>
       </ul>
 
+
+
       {/* Modal */}
       <Modal show={modalVisible} centered>
         <Modal.Body className="text-center">
-          {loading ? (
+          {paymentLoading ? (
             <>
               <Spinner animation="border" role="status" className="mb-3">
                 <span className="visually-hidden">Loading...</span>
@@ -271,7 +385,8 @@ const scrollToBottom = () => {
           )}
         </Modal.Body>
       </Modal>
-       <style jsx>{`
+
+      <style jsx>{`
         .typing-bubble {
           width: 12px;
           height: 12px;
@@ -309,6 +424,7 @@ const scrollToBottom = () => {
           }
         }
       `}</style>
+       
     </div>
   );
 }

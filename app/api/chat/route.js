@@ -25,6 +25,7 @@ export async function POST(request) {
       );
     }
 
+    // Save the user's message
     const { error: userInsertError } = await supabase
       .from("Chat")
       .insert({
@@ -38,6 +39,7 @@ export async function POST(request) {
       throw userInsertError;
     }
 
+    // Call the OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -50,7 +52,7 @@ export async function POST(request) {
           {
             role: "system",
             content:
-              "You are a document-generating assistant.",
+              "You are a document-generating assistant. Respond in detail to user queries.",
           },
           { role: "user", content: message },
         ],
@@ -73,7 +75,7 @@ export async function POST(request) {
 
     const assistantMessage = data.choices[0]?.message?.content || "";
 
-    // Insert assistant's message
+    // Save the assistant's response
     const { error: assistantInsertError } = await supabase
       .from("Chat")
       .insert({
@@ -88,6 +90,35 @@ export async function POST(request) {
         assistantInsertError.message
       );
       throw assistantInsertError;
+    }
+
+    // Check for keywords in the user's message
+    const keywords = ["documentize", "document", "agreement"];
+    const isDocumentRequest = keywords.some((keyword) =>
+      message.toLowerCase().includes(keyword)
+    );
+
+    if (isDocumentRequest) {
+      // Generate a Word document
+      const docContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+        <head><title>Document</title></head>
+        <body>${assistantMessage}</body>
+        </html>
+      `;
+
+      const blob = new Blob([docContent], {
+        type: "application/msword",
+      });
+
+      // Save file to the user
+      return new Response(blob, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/msword",
+          "Content-Disposition": "attachment; filename=document.doc",
+        },
+      });
     }
 
     return new Response(
