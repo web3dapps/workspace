@@ -86,6 +86,20 @@ const handleFileUpload = async (documentUrl) => {
     reader.onload = async (e) => {
       const base64File = e.target.result.split(",")[1]; // Extract base64 content
 
+      
+    setPaymentLoading(true);
+    setModalVisible(true);
+    setPaymentSuccess(false);
+
+    const tokenAmount = 0.001 * 10 ** 9;
+
+    const txHash = await deductTokens(web3, userAddress, tokenAmount);
+
+    toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+    setPaymentLoading(false);
+    setPaymentSuccess(true);
+    setTimeout(() => setModalVisible(false), 1000);
+
       const uploadResponse = await axios.post("/api/upload", {
         file: base64File,
         fileName: "generated-document.doc",
@@ -325,7 +339,20 @@ const scrollToBottom = () => {
         ))}
 
         <div ref={chatEndRef}></div>
-
+        
+         {loading && (
+          <li className="d-flex justify-content-start mb-4">
+            <div className="card">
+              <div className="card-body">
+                <p className="mb-0">
+                  <span className="typing-bubble"></span>
+                  <span className="typing-bubble"></span>
+                  <span className="typing-bubble"></span>
+                </p>
+              </div>
+            </div>
+          </li>
+        )}
 
         <li className="mb-3">
           <div className="form-outline position-relative">
