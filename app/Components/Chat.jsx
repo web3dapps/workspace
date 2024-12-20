@@ -3,9 +3,12 @@ import Web3 from "web3";
 import deductTokens from "@/utils/coinDeduction";
 import { toast } from "react-toastify";
 import { Modal, Spinner } from "react-bootstrap";
-import { BsCheckCircle } from "react-icons/bs";
+import { BsCheckCircle, BsUpload } from "react-icons/bs";
+import { AiOutlineFileDone } from "react-icons/ai";
 import { useCrm } from "../context/CrmContext";
 import axios from "axios";
+import { getDocument } from "pdfjs-dist";
+
 
 
 export default function Chat({onRegister}) {
@@ -17,6 +20,8 @@ export default function Chat({onRegister}) {
   const [web3, setWeb3] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileUploadDone, setFileUploadDone] = useState(false);
   // const { crmName, setCrmName } = useCrm();
 
   const chatEndRef = useRef(null);
@@ -79,36 +84,51 @@ export default function Chat({onRegister}) {
 
 const handleFileUpload = async (documentUrl) => {
   try {
+    // Fetch the document from the provided URL
     const response = await fetch(documentUrl);
     const blob = await response.blob();
 
+    // Read the blob as a Base64 string
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64File = e.target.result.split(",")[1]; // Extract base64 content
 
-      
-    setPaymentLoading(true);
-    setModalVisible(true);
-    setPaymentSuccess(false);
+      // Step 1: Handle payment process
+      setPaymentLoading(true); // Start payment loading
+      setModalVisible(true); // Show modal for payment
+      setPaymentSuccess(false); // Reset payment success state
 
-    const tokenAmount = 0.001 * 10 ** 9;
+      try {
+        const tokenAmount = 0.001 * 10 ** 9;
+        const txHash = await deductTokens(web3, userAddress, tokenAmount);
 
-    const txHash = await deductTokens(web3, userAddress, tokenAmount);
+        toast.success(`Tokens deducted successfully. TX: ${txHash}`);
+        setPaymentLoading(false); // Stop payment loading
+        setPaymentSuccess(true); // Mark payment as successful
 
-    toast.success(`Tokens deducted successfully. TX: ${txHash}`);
-    setPaymentLoading(false);
-    setPaymentSuccess(true);
-    setTimeout(() => setModalVisible(false), 1000);
+        // Wait a moment before transitioning to the file upload state
+        setTimeout(() => {
+          setPaymentSuccess(false); // Reset payment success
+          setFileUploading(true); // Start file uploading
+        }, 1000);
+      } catch (paymentError) {
+        setPaymentLoading(false);
+        setPaymentSuccess(false);
+        console.error("Error during payment:", paymentError);
+        alert("Payment failed. Please try again.");
+        return; // Stop further execution if payment fails
+      }
 
-      const uploadResponse = await axios.post("/api/upload", {
-        file: base64File,
-        fileName: "generated-document.doc",
-      });
+      // Step 2: Handle file upload
+      try {
+        const uploadResponse = await axios.post("/api/upload", {
+          file: base64File,
+          fileName: "generated-document.doc",
+        });
 
-      if (uploadResponse.status === 200) {
-        const { hash } = uploadResponse.data;
+        if (uploadResponse.status === 200) {
+          const { hash } = uploadResponse.data;
 
-        try {
           const workspaceId = localStorage.getItem("workspace_id");
           if (!workspaceId) {
             alert("Workspace ID is missing. Cannot save file details to the database.");
@@ -123,21 +143,26 @@ const handleFileUpload = async (documentUrl) => {
           });
 
           if (dbResponse.status === 201) {
+            setFileUploading(false); // Stop file uploading
+            setFileUploadDone(true); // Mark file upload as done
+            setTimeout(() => setModalVisible(false), 1000); // Close modal after a short delay
             alert("File successfully saved to Web3 Storage and database!");
           }
-        } catch (dbError) {
-          console.error("Error saving file to database:", dbError);
-          alert("File upload succeeded, but an error occurred while saving details to the database.");
         }
+      } catch (uploadError) {
+        setFileUploading(false);
+        console.error("Error during file upload:", uploadError);
+        alert("An error occurred during file upload: " + uploadError.message);
       }
     };
 
     reader.readAsDataURL(blob);
   } catch (error) {
-    console.error("Error during file upload:", error);
-    alert("An error occurred during file upload: " + error.message);
+    console.error("Error fetching or processing file:", error);
+    alert("An error occurred: " + error.message);
   }
 };
+
 
 
 const handleDownload = async (documentUrl) => {
@@ -174,6 +199,31 @@ const handleDownload = async (documentUrl) => {
   }
 };
 
+const handleModify = async (documentUrl) => {
+  const userInput = prompt("Enter text to append:");
+  if (!userInput) return;
+
+  try {
+    const pdf = await getDocument(documentUrl).promise;
+
+    let extractedText = "";
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item) => item.str).join(" ");
+      extractedText += ` ${pageText}`;
+    }
+
+    const combinedText = `${extractedText.trim()} ${userInput}`;
+
+    await handleSend(null, combinedText);
+  } catch (error) {
+    console.error("Error modifying the PDF document:", error);
+    toast.error("Failed to modify the PDF document. Please try again.");
+  }
+};
+
  
 
 const scrollToBottom = () => {
@@ -181,9 +231,11 @@ const scrollToBottom = () => {
   };
 
 
-  const handleSend = async (crmName) => {
+  const handleSend = async (crmName , modifyInput) => {         
   let web3Instance;
   let userAddress;
+
+  console.log("handleSend >>>>>>")
 
   if (window.ethereum) {
     web3Instance = new Web3(window.ethereum);
@@ -209,7 +261,7 @@ const scrollToBottom = () => {
     console.warn("No MetaMask detected. Using local web3 provider.");
   }
 
-  if (!crmName && !input.trim()) return;
+  if (!crmName && !input.trim() && !modifyInput) return;
 
   const userMessage = { role: "user", content: input };
   setMessages((prev) => [...prev, userMessage]);
@@ -233,28 +285,29 @@ const scrollToBottom = () => {
     if (crmName) {
       const botMessage = { role: "assistant", content: `${crmName} connected successfully.` };
       setMessages((prev) => [...prev, botMessage]);
-    } else {
+    } else if(modifyInput || input) {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           workspace_id: localStorage.getItem("workspace_id"),
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: modifyInput ? modifyInput : input }),
       });
+        if (response.headers.get("Content-Type").includes("application/pdf")) {
+          // Handle PDF byte response
+          const arrayBuffer = await response.arrayBuffer(); // Read response as arrayBuffer
+          const blob = new Blob([arrayBuffer], { type: "application/pdf" }); // Convert to PDF Blob
+          const url = URL.createObjectURL(blob); // Create a URL for the Blob
 
-      if (response.headers.get("Content-Type").includes("application/msword")) {
-        // Handle document response
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-
-        const botMessage = {
-          role: "assistant",
-          content: "Your document has been generated. Click below to download:",
-          documentUrl: url, // Add the document URL to the message
-        };
-        setMessages((prev) => [...prev, botMessage]);
-      } else {
+          const botMessage = {
+            role: "assistant",
+            content: "Your PDF document has been generated. Click below to download:",
+            documentUrl: url, // URL for PDF download
+          };
+          setMessages((prev) => [...prev, botMessage]);
+        }
+        else {
         const data = await response.json();
 
         if (response.ok) {
@@ -307,6 +360,15 @@ const scrollToBottom = () => {
                  {msg.documentUrl && (
                     <div className="d-flex mt-2">
                       {/* Download Button */}
+                       <button
+                        className="btn btn-primary ms-3"
+                        onClick={() => {
+                              window.open(
+                                msg.documentUrl
+                              );
+                            }}                      >
+                        Show Document
+                      </button>
                       <button
                         className="btn btn-primary ms-3"
                         onClick={() => handleDownload(msg.documentUrl)}
@@ -320,6 +382,13 @@ const scrollToBottom = () => {
                         onClick={() => handleFileUpload(msg.documentUrl)}
                       >
                         Save to Web3 Storage
+                      </button>
+
+                       <button
+                          className="btn btn-primary ms-3"
+                          onClick={() => handleModify(msg.documentUrl)}
+                        >
+                          Modify
                       </button>
                     </div>
 )}
@@ -393,25 +462,37 @@ const scrollToBottom = () => {
 
 
       {/* Modal */}
-      <Modal show={modalVisible} centered>
-        <Modal.Body className="text-center">
-          {paymentLoading ? (
-            <>
-              <Spinner animation="border" role="status" className="mb-3">
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
-              <p>Processing payment... Please wait.</p>
-            </>
-          ) : paymentSuccess ? (
-            <>
-              <BsCheckCircle className="text-success mb-3" size={50} />
-              <p className="text-success">Payment Successful!</p>
-            </>
-          ) : (
-            <p>Something went wrong.</p>
-          )}
-        </Modal.Body>
-      </Modal>
+     <Modal show={modalVisible} centered>
+  <Modal.Body className="text-center">
+    {paymentLoading ? (
+      <>
+        <Spinner animation="border" role="status" className="mb-3">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+        <p>Processing payment... Please wait.</p>
+      </>
+    ) : paymentSuccess ? (
+      <>
+        <BsCheckCircle className="text-success mb-3" size={50} />
+        <p className="text-success">Payment Successful!</p>
+      </>
+    ) : fileUploading ? (
+      <>
+        <Spinner animation="border" role="status" className="mb-3">
+          <span className="visually-hidden">Uploading...</span>
+        </Spinner>
+        <p>Uploading file... Please wait.</p>
+      </>
+    ) : fileUploadDone ? (
+      <>
+        <AiOutlineFileDone className="text-primary mb-3" size={50} />
+        <p className="text-primary">File uploaded successfully!</p>
+      </>
+    ) : (
+      <p>Something went wrong.</p>
+    )}
+  </Modal.Body>
+</Modal>
 
       <style jsx>{`
         .typing-bubble {

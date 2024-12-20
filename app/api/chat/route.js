@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import supabase from "@/lib/database";
-import { saveAs } from "file-saver"; 
+import { PDFDocument, rgb } from 'pdf-lib';
+
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
@@ -75,12 +76,21 @@ export async function POST(request) {
 
     const assistantMessage = data.choices[0]?.message?.content || "";
 
+    const keywords = ["documentize", "document", "agreement"];
+    const isDocumentRequest = keywords.some((keyword) =>
+      message.toLowerCase().includes(keyword)
+    );
+
+    const storedMessage = isDocumentRequest
+      ? "Check your Web3 Storage for the requested document"
+      : assistantMessage;
+
     // Save the assistant's response
     const { error: assistantInsertError } = await supabase
       .from("Chat")
       .insert({
         workspace_id: workspaceId,
-        content: assistantMessage,
+        content: storedMessage,
         role: "assistant",
       });
 
@@ -92,31 +102,29 @@ export async function POST(request) {
       throw assistantInsertError;
     }
 
-    // Check for keywords in the user's message
-    const keywords = ["documentize", "document", "agreement"];
-    const isDocumentRequest = keywords.some((keyword) =>
-      message.toLowerCase().includes(keyword)
-    );
-
     if (isDocumentRequest) {
-      // Generate a Word document
-      const docContent = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
-        <head><title>Document</title></head>
-        <body>${assistantMessage}</body>
-        </html>
-      `;
+      // Generate a PDF
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const fontSize = 12;
 
-      const blob = new Blob([docContent], {
-        type: "application/msword",
+      page.drawText(assistantMessage, {
+        x: 50,
+        y: height - 50,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+        maxWidth: width - 100,
+        lineHeight: 16,
       });
 
-      // Save file to the user
-      return new Response(blob, {
+      const pdfBytes = await pdfDoc.save();
+
+      return new Response(pdfBytes, {
         status: 200,
         headers: {
-          "Content-Type": "application/msword",
-          "Content-Disposition": "attachment; filename=document.doc",
+          "Content-Type": "application/pdf",
+          "Content-Disposition": "attachment; filename=document.pdf",
         },
       });
     }
@@ -136,6 +144,7 @@ export async function POST(request) {
     );
   }
 }
+
 
 export async function GET(request) {
   try {
