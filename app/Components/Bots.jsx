@@ -25,7 +25,8 @@ export default function Bots() {
                   </p>
                   <a
                     href="/bots/fastguru-custom-bots-use/4hYxpqgqvjIWETXrugYL/"
-                    class="use-bot btn btn-warning"
+                    class="use-bot btn"
+                    style={{ backgroundColor: "#303136", color: "white" }}
                   >
                     Use
                   </a>

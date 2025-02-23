@@ -192,7 +192,7 @@ const handleDelete = async (id) => {
 
   return (
     <>
-    {!walletAddress && <ClaimTokenModel/>}
+      {!walletAddress && <ClaimTokenModel />}
       <Header />
       <div
         className="py-5 bg-dark"
@@ -206,10 +206,12 @@ const handleDelete = async (id) => {
           <Row className="mb-4" style={{ marginTop: "5rem" }}>
             <Col md="12" className="text-center">
               <h3
-              style={{
-                color: "#FFF5E5",
-              }}
-              >Web3Space Management</h3>
+                style={{
+                  color: "#FFF5E5",
+                }}
+              >
+                Web3Space Management
+              </h3>
               <p className="text-muted">
                 Create and manage your workspaces effortlessly
               </p>
@@ -222,173 +224,176 @@ const handleDelete = async (id) => {
                 className="border-0 shadow-sm d-flex justify-content-center align-items-center"
                 style={{
                   height: "315px",
-                  backgroundColor: "#FFF5E5", 
+                  backgroundColor: "#2C2F36",
                   cursor: "pointer",
                   borderRadius: "10px",
-                  border: "2px dashed #f59532", 
+                  border: "2px dashed #515151",
                 }}
                 onClick={() => {
-                 console.log(walletAddress, "inside if condition")
+                  console.log(walletAddress, "inside if condition");
 
-                if (!walletAddress) {
-                  console.log(walletAddress, "inside if condition")
-                toast.error("Wallet is not connected. Please connect your wallet.");
-                return; 
-                    }  
-                setModalOpen(true)}}
+                  if (!walletAddress) {
+                    console.log(walletAddress, "inside if condition");
+                    toast.error(
+                      "Wallet is not connected. Please connect your wallet."
+                    );
+                    return;
+                  }
+                  setModalOpen(true);
+                }}
               >
                 <h1
                   className="text-muted"
                   style={{
-                    color: "#f59532",
+                    color: "#ffffff !important",
                   }}
                 >
                   +
                 </h1>
-                <p className="text-muted">Create New</p>
               </Card>
             </Col>
 
-        {workspaces.map((ws, index) => (
-          <Col lg="3" md="4" sm="6" key={index}>
-            <Card
-              className="border-0 shadow-sm position-relative text-center"
-              style={{
-                borderRadius: "15px", 
-                backgroundColor: "#FFF5E5", 
-                color: "white",
-                overflow: "hidden",
-              }}
-            >
-              {/* Close Button */}
-              <button
-                type="button"
-                className="btn-close position-absolute top-0 end-0 m-2"
-                aria-label="Close"
-                style={{
-                  color: "#000",
-                  filter: "invert(100%)",
-                }}
-                onClick={() => handleDelete(ws.id)}
-              ></button>
-
-              <CardBody className="d-flex flex-column align-items-center p-4">
-                <h5
-                  className="mb-3"
+            {workspaces.map((ws, index) => (
+              <Col lg="3" md="4" sm="6" key={index}>
+                <Card
+                  className="border-0 shadow-sm position-relative text-center"
                   style={{
-                    color: "#000",
-                    fontWeight: "bold",
+                    borderRadius: "15px",
+                    backgroundColor: "#3B3F47",
+                    color: "white",
+                    overflow: "hidden",
                   }}
                 >
-                  {ws.name}
-                </h5>
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    className="btn-close position-absolute top-0 end-0 m-2"
+                    aria-label="Close"
+                    style={{
+                      color: "#ffffff",
+                      filter: "invert(100%)",
+                    }}
+                    onClick={() => handleDelete(ws.id)}
+                  ></button>
 
-                <img
-                  src={ws.image || "/default-image.png"}
-                  alt={ws.name}
-                  width="120"
-                  height="120"
-                  className="rounded-circle shadow mb-4"
-                  style={{
-                    objectFit: "cover",
-                    border: "3px solid #f59532",
-                  }}
-                />
+                  <CardBody className="d-flex flex-column align-items-center p-4">
+                    <h5
+                      className="mb-3"
+                      style={{
+                        color: "#ffffff",
+                        // fontWeight: "bold",
+                      }}
+                    >
+                      {ws.name}
+                    </h5>
+
+                    <img
+                      src={ws.image || "/default-image.png"}
+                      alt={ws.name}
+                      width="120"
+                      height="120"
+                      className="rounded-circle shadow mb-4"
+                      style={{
+                        objectFit: "cover",
+                        border: "2.5px solid #f59532",
+                      }}
+                    />
 
                     <h5
-              className="mb-3 workspace-description"
-              style={{
-                color: "#000",
-                fontWeight: "bold",
-              }}
-              title={ws.description}  
-            >
-              {ws.description}
-            </h5>
+                      className="mb-3 workspace-description"
+                      style={{
+                        color: "#ffffff",
+                        // fontWeight: "bold",
+                      }}
+                      title={ws.description}
+                    >
+                      {ws.description}
+                    </h5>
 
-
-                {/* Manage Button */}
-                <Link href="/admin" passHref>
-                  <Button
-                    style={{
-                      backgroundColor: "#f59532",
-                      borderColor: "#f59532",
-                      color: "white",
-                      fontWeight: "bold",
-                      padding: "0.5rem 1.5rem",
-                      borderRadius: "25px", 
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "#e58528"; 
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "#f59532";
-                    }}
-                    onMouseDown={(e) => {
-                      e.target.style.transform = "scale(0.95)"; 
-                    }}
-                    onMouseUp={(e) => {
-                      e.target.style.transform = "scale(1)"; 
-                    }}
-                    onClick={() => {
-                      localStorage.setItem("workspace_id", ws.id);
-                    }}
-                  >
-                    Manage
-                  </Button>
-                </Link>
-              </CardBody>
-            </Card>
-          </Col>
-        ))}
-
+                    {/* Manage Button */}
+                    <Link href="/admin" passHref>
+                      <Button
+                        style={{
+                          backgroundColor: "#f59532",
+                          borderColor: "#f59532",
+                          color: "white",
+                          fontWeight: "bold",
+                          padding: "0.5rem 1.5rem",
+                          borderRadius: "25px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#e58528";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#f59532";
+                        }}
+                        onMouseDown={(e) => {
+                          e.target.style.transform = "scale(0.95)";
+                        }}
+                        onMouseUp={(e) => {
+                          e.target.style.transform = "scale(1)";
+                        }}
+                        onClick={() => {
+                          localStorage.setItem("workspace_id", ws.id);
+                        }}
+                      >
+                        Manage
+                      </Button>
+                    </Link>
+                  </CardBody>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </Container>
       </div>
 
-      <Modal isOpen={modalOpen} toggle={() => setModalOpen(!modalOpen)} centered>
-          <ModalHeader
+      <Modal
+        isOpen={modalOpen}
+        toggle={() => setModalOpen(!modalOpen)}
+        centered
+      >
+        <ModalHeader
+          style={{
+            backgroundColor: "#f59532",
+            color: "white",
+            borderBottom: "none",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
+          <h5
             style={{
-              backgroundColor: "#f59532", 
-              color: "white",
-              borderBottom: "none",
-              display: "flex", 
-              justifyContent: "center",
-              alignItems: "center", 
-              position: "relative",
+              margin: 0,
+              fontWeight: "bold",
             }}
           >
-            <h5
-              style={{
-                margin: 0,
-                fontWeight: "bold",
-              }}
-            >
-              Create Workspace
-            </h5>
+            Create Workspace
+          </h5>
 
-            {/* Close Button */}
-            <button
-              type="button"
-              className="btn-close"
-              aria-label="Close"
-              style={{
-                position: "absolute",
-                top: "12px",
-                right: "16px",
-                color: "white",
-                filter: "invert(100%)",
-              }}
-              onClick={() => setModalOpen(false)}
-            ></button>
-          </ModalHeader>
+          {/* Close Button */}
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            style={{
+              position: "absolute",
+              top: "12px",
+              right: "16px",
+              color: "white",
+              filter: "invert(100%)",
+            }}
+            onClick={() => setModalOpen(false)}
+          ></button>
+        </ModalHeader>
 
-
-        <ModalBody>
+        <ModalBody className="bg-dark">
           <form onSubmit={handleSubmit}>
             <Row className="g-3">
               <Col md="12">
-                <label htmlFor="name" className="form-label">
+                <label htmlFor="name" className="form-label text-white">
                   Workspace Name
                 </label>
                 <input
@@ -401,7 +406,7 @@ const handleDelete = async (id) => {
                 />
               </Col>
               <Col md="12">
-                <label htmlFor="description" className="form-label">
+                <label htmlFor="description" className="form-label text-white">
                   Workspace Description
                 </label>
                 <textarea
@@ -414,7 +419,7 @@ const handleDelete = async (id) => {
                 ></textarea>
               </Col>
               <Col md="12">
-                <label htmlFor="file" className="form-label">
+                <label htmlFor="file" className="form-label text-white">
                   Workspace Image
                 </label>
                 <input
@@ -428,7 +433,7 @@ const handleDelete = async (id) => {
           </form>
         </ModalBody>
         <ModalFooter
-          className="d-flex justify-content-center"
+          className="d-flex justify-content-center bg-dark mt-0"
           style={{ borderTop: "none" }}
         >
           <Button

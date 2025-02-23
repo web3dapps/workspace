@@ -379,19 +379,23 @@ footer .nav a
   box-sizing: border-box; /* Includes padding in the height calculation */
 }
 
-.chat-section .nav-tabs .nav-link
-{
-background: #6c757d ;
-color: #fff;
-margin-right: 10px;
-border: 0;
-border-radius: 5px;
-cursor: pointer;
+.chat-section .nav-tabs .nav-link {
+  background: #303136; /* Slightly lighter shade for inactive tabs */
+  color: #ffffff !important;
+  margin-right: 10px;
+  border-radius: 10px; /* Smooth rounded corners */
+  padding: 10px 15px; /* Adjust padding for better aesthetics */
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth hover effect */
 }
-.chat-section .nav-tabs .nav-link.active 
-{
-  background: #f39436 !important;
+
+.chat-section .nav-tabs .nav-link.active {
+  background: #515151 !important; /* Darker shade for active tab */
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for active tab */
+  border: 1px solid #515151; /* Ensure a distinct border */
 }
+
 
 .custom-connect-button .chakra-button {
   background-color: #f59532 !important; 
@@ -531,4 +535,43 @@ cursor: pointer;
 
 .close-popup:active {
   background-color: #bf681c; /* Darker shade on click */
+}
+
+/* Style for buttons inside Collapse */
+.collapse .btn {
+  color: #e2e2e5; /* Light text color */
+  background-color: #242629; /* Dark background color */
+  border: 1px solid #444; /* Subtle border for visibility */
+  border-radius: 5px;
+  padding: 0.5rem 1rem; /* Padding for better button appearance */
+  font-size: 0.875rem; /* Adjust font size */
+  transition: background-color 0.3s, border-color 0.3s; /* Smooth transition on hover */
+}
+
+.collapse .btn:hover {
+  background-color: #333; /* Darker background on hover */
+  border-color: #666; /* Lighter border color on hover */
+}
+
+.collapse .btn:focus {
+  outline: none; /* Remove outline on focus */
+}
+
+/* Style for the specific button with no hover/focus effects */
+.collapse .btn.custom-btn-no-hover {
+  color: #242629; /* Dark text color */
+  background-color: #e2e2e5; /* Light background color */
+  border: 1px solid #bbb; /* Subtle border */
+  border-radius: 5px;
+  padding: 0.5rem 1rem; /* Padding for better button appearance */
+  font-size: 0.875rem; /* Adjust font size */
+  transition: none; /* Disable transition */
+}
+
+/* No hover or focus effects for this button */
+.collapse .btn.custom-btn-no-hover:hover,
+.collapse .btn.custom-btn-no-hover:focus {
+  background-color: #e2e2e5; /* Keep same background */
+  border-color: #bbb; /* Keep same border color */
+  outline: none; /* No outline on focus */
 }

@@ -61,7 +61,7 @@ export default function Index() {
 
   return (
     <>
-    <ToastContainer />
+      <ToastContainer />
       <Navbar />
       <section className="chat-section bg-dark">
         <div className="px-3">
@@ -118,8 +118,8 @@ export default function Index() {
               <NavLink
                 // href="https://polygonscan.com/token/0x20854e3f9231778a1f9515a5551872f161a1e3a2"
                 // target="_blank"
-                 className={classnames({ active: activeTab === "8" })}
-                 onClick={() => toggleTab("8")}
+                className={classnames({ active: activeTab === "8" })}
+                onClick={() => toggleTab("8")}
               >
                 <i class="bi bi-repeat"></i> Transaction History
               </NavLink>
@@ -168,14 +168,14 @@ export default function Index() {
                               width="40"
                               height="40"
                             />
-                            <strong className="small text-warning">
+                            <strong className="small text-white">
                               0xE980aC9c9B77A57BcF7638C72c1DCac2f7ee7G8d
                             </strong>
                           </div>
                           <i class="bi bi-copy text-white"></i>
                         </div>
                       </div>
-                      <Chat onRegister={setChildFunction}/>
+                      <Chat onRegister={setChildFunction} />
                     </Col>
                   </Row>
                 </TabPane>
@@ -211,7 +211,12 @@ export default function Index() {
                             </div>
                           </div>
                           <button
-                            class="btn btn-warning rounded-5"
+                            class="btn rounded-5"
+                            style={{
+                              backgroundColor: "#242629",
+                              color: "white",
+                              border: "none",
+                            }}
                             data-bs-toggle="modal"
                             data-bs-target="#addMemberModal"
                           >
@@ -358,20 +363,20 @@ export default function Index() {
                       </Card>
                     </Col>
                   </Row> */}
-                  <TabPaneDocuments/>
+                  <TabPaneDocuments />
                 </TabPane>
                 <TabPane tabId="8">
-                <TransactionHistory/>
+                  <TransactionHistory />
                 </TabPane>
               </TabContent>
             </Col>
             <Col md="3">
-              <div className="border rounded-3 p-3 h-100 border-secondary">
-                <EnterprisesModules handleSend={handleSend}/>
-                <PersonalModules/>
-                <MyAgentSpace/>
-                <DocumentsAndFiles/>
-                <MeetigsAndEvents/>
+              <div className="border rounded-3 p-5 h-100 border-secondary">
+                <EnterprisesModules handleSend={handleSend} />
+                <PersonalModules />
+                <MyAgentSpace />
+                <DocumentsAndFiles />
+                {/* <MeetigsAndEvents /> */}
                 {/* <Features />
                 <Documentreportsummary />
                 <Mediagallery />

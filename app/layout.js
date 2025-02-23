@@ -12,21 +12,23 @@ export const metadata = {
 import { WalletProvider } from './context/WalletContext';
 import { ActiveTabProvider } from './context/ActiveTab';
 import { CrmProvider } from './context/CrmContext';
-
+import { RealestateProvider } from "./context/RealestateContext";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>          
+      <body className={inter.className}>
         <Providers>
           <WalletProvider>
             <ActiveTabProvider>
               <CrmProvider>
-            {children}
-            </CrmProvider>
+                <RealestateProvider>
+                  {children}
+                </RealestateProvider>{" "}
+              </CrmProvider>
             </ActiveTabProvider>
-            </WalletProvider>
-          </Providers>
-          <Providers></Providers>
+          </WalletProvider>
+        </Providers>
+        <Providers></Providers>
       </body>
     </html>
   );
