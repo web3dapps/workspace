@@ -67,12 +67,12 @@ export default function Index() {
         <div className="px-3">
           <Nav tabs className="mb-3 border-0">
             <NavItem>
-              <NavLink
+              {/* <NavLink
                 className={classnames({ active: activeTab === "1" })}
                 onClick={() => toggleTab("1")}
               >
                 <i className="bi bi-person"></i> Education Worksapce
-              </NavLink>
+              </NavLink> */}
             </NavItem>
             <NavItem>
               <NavLink
